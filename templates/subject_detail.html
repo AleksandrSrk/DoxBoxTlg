@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ subject.name }} — doxBot{% endblock %}
+{% block content %}
+
+<a href="/admin" class="back-link">← Субъекты</a>
+
+{% set error = request.query_params.get('error') %}
+{% if error %}
+<div class="error-banner"><i class="ti ti-alert-triangle"></i> {{ error }}</div>
+{% endif %}
+
+<div class="subject-header">
+  <form method="post" action="/admin/subjects/{{ subject.id }}/rename" class="inline-form">
+    <input type="text" name="name" value="{{ subject.name }}">
+    <button type="submit">Сохранить</button>
+  </form>
+  <form method="post" action="/admin/subjects/{{ subject.id }}/delete"
+        onsubmit="return confirm('Удалить субъекта? Если есть документы — не даст.');">
+    <button type="submit" class="btn-danger">Удалить субъекта</button>
+  </form>
+</div>
+
+<div class="toolbar">
+  <a class="btn" href="/admin/documents/new?subject_id={{ subject.id }}">+ Документ</a>
+  <form method="post" action="/admin/subjects/{{ subject.id }}/folders" class="inline-form">
+    <input type="text" name="name" placeholder="Новая папка">
+    <button type="submit">+ Папка</button>
+  </form>
+</div>
+
+{% macro doc_row(d) %}
+<div class="doc-row">
+  <div class="doc-row-title">
+    <span class="doc-title">{{ d.title }}</span>
+    <span class="badge">{{ d.category.name }}</span>
+    {% if d.is_primary %}<span class="badge badge-accent">★ основной</span>{% endif %}
+  </div>
+  <div class="doc-row-date muted">{{ d.issue_date or "—" }}</div>
+  <div class="doc-row-actions">
+    <a href="/admin/documents/{{ d.id }}/edit" class="icon-btn" title="Править"><i class="ti ti-pencil"></i></a>
+    <form method="post" action="/admin/documents/{{ d.id }}/delete"
+          onsubmit="return confirm('Удалить документ?');">
+      <button type="submit" class="icon-btn icon-btn-danger" title="Удалить"><i class="ti ti-trash"></i></button>
+    </form>
+  </div>
+</div>
+{% endmacro %}
+
+{% for f in folders %}
+<div class="folder-section">
+  <div class="folder-head">
+    <span class="folder-name"><i class="ti ti-folder"></i> {{ f.name }}</span>
+    <a class="icon-btn icon-btn-lg" title="Добавить документ в эту папку"
+       href="/admin/documents/new?subject_id={{ subject.id }}&folder_id={{ f.id }}"><i class="ti ti-plus"></i></a>
+    <form method="post" action="/admin/folders/{{ f.id }}/delete"
+          onsubmit="return confirm('Удалить папку? Документы останутся без папки.');">
+      <button type="submit" class="icon-btn icon-btn-danger" title="Удалить папку"><i class="ti ti-trash"></i></button>
+    </form>
+  </div>
+  {% for d in docs_by_folder.get(f.id, []) %}{{ doc_row(d) }}{% else %}
+  <div class="muted" style="padding:6px 0;">Пусто</div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+{% if docs_no_folder %}
+<div class="folder-section">
+  <div class="folder-head"><span class="folder-name">Без папки</span></div>
+  {% for d in docs_no_folder %}{{ doc_row(d) }}{% endfor %}
+</div>
+{% endif %}
+
+{% if not folders and not docs_no_folder %}
+<p class="muted">Пока пусто — добавь папку или сразу документ.</p>
+{% endif %}
+
+{% endblock %}

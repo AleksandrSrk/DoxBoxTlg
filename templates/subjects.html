@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Субъекты — doxBot{% endblock %}
+{% block content %}
+<h1>Субъекты</h1>
+
+<form method="post" action="/admin/subjects" class="inline-form">
+  <input type="text" name="name" placeholder="Название (Я, Жена, Квартира...)" required>
+  <button type="submit">Добавить</button>
+</form>
+
+<div class="subject-grid">
+{% for s in subjects %}
+<a class="subject-card" href="/admin/subjects/{{ s.id }}">
+  <div class="subject-card-name">{{ s.name }}</div>
+  <div class="subject-card-count">{{ doc_counts.get(s.id, 0) }} документ{{ "ов" if doc_counts.get(s.id, 0) != 1 else "" }}</div>
+</a>
+{% endfor %}
+</div>
+
+{% if not subjects %}
+<p class="muted">Пока пусто — добавь первого субъекта выше.</p>
+{% endif %}
+{% endblock %}

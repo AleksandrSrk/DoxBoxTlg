@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Документы — doxBot{% endblock %}
+{% block content %}
+<h1>Документы</h1>
+
+<form method="get" action="/admin/documents" class="filters">
+  <select name="subject_id" onchange="this.form.submit()">
+    <option value="">Все субъекты</option>
+    {% for s in subjects %}
+    <option value="{{ s.id }}" {% if selected_subject==s.id %}selected{% endif %}>{{ s.name }}</option>
+    {% endfor %}
+  </select>
+  <select name="category_id" onchange="this.form.submit()">
+    <option value="">Все категории</option>
+    {% for c in categories %}
+    <option value="{{ c.id }}" {% if selected_category==c.id %}selected{% endif %}>{{ c.name }}</option>
+    {% endfor %}
+  </select>
+</form>
+
+<p><a class="btn" href="/admin/documents/new">+ Новый документ</a></p>
+
+<table class="table">
+<tr><th>Название</th><th>Категория</th><th>Субъект</th><th>Дата выдачи</th><th>Осн.</th><th></th></tr>
+{% for d in documents %}
+<tr>
+  <td>{{ d.title }}</td>
+  <td>{{ d.category.name }}</td>
+  <td><a href="/admin/subjects/{{ d.subject_id }}">{{ d.subject.name }}</a></td>
+  <td>{{ d.issue_date or "—" }}</td>
+  <td>{% if d.is_primary %}★{% endif %}</td>
+  <td>
+    <div class="doc-row-actions">
+      <a href="/admin/documents/{{ d.id }}/edit" class="icon-btn" title="Править"><i class="ti ti-pencil"></i></a>
+      <form method="post" action="/admin/documents/{{ d.id }}/delete"
+            onsubmit="return confirm('Удалить документ?');">
+        <button type="submit" class="icon-btn icon-btn-danger" title="Удалить"><i class="ti ti-trash"></i></button>
+      </form>
+    </div>
+  </td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

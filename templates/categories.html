@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Категории — doxBot{% endblock %}
+{% block content %}
+<h1>Категории</h1>
+
+{% set error = request.query_params.get('error') %}
+{% if error %}
+<div class="error-banner"><i class="ti ti-alert-triangle"></i> {{ error }}</div>
+{% endif %}
+
+
+<form method="post" action="/admin/categories" class="inline-form">
+  <input type="text" name="name" placeholder="Новая категория" required>
+  <button type="submit">Добавить</button>
+</form>
+
+<table class="table">
+{% for c in categories %}
+<tr>
+  <td>
+    <form method="post" action="/admin/categories/{{ c.id }}/rename" class="inline-form">
+      <input type="text" name="name" value="{{ c.name }}">
+      <button type="submit">Сохранить</button>
+    </form>
+  </td>
+  <td>
+    <form method="post" action="/admin/categories/{{ c.id }}/delete"
+          onsubmit="return confirm('Удалить категорию? Если используется — не даст.');">
+      <button type="submit" class="btn-danger">Удалить</button>
+    </form>
+  </td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

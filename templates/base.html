@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}doxBot admin{% endblock %}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+<nav class="nav">
+  <a href="/admin">Субъекты</a>
+  <a href="/admin/documents">Документы</a>
+  <a href="/admin/categories">Категории</a>
+</nav>
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>
