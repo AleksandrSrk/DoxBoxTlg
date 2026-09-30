@@ -90,6 +90,31 @@ input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color:
 .avatar-1 { background: var(--accent2-soft); color: var(--accent2); }
 .avatar-2 { background: #e8f0ee; color: #2f5d53; }
 .avatar-3 { background: #f2ece0; color: #8a6a34; }
+.avatar-lg { width: 64px; height: 64px; font-size: 24px; }
+
+/* Карточка-обособление шапки субъекта */
+.subject-identity {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 20px 22px; margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.subject-identity-name { display: flex; align-items: center; gap: 16px; }
+.subject-name-text { font-size: 22px; font-weight: 600; color: var(--text); }
+.subject-name-edit { display: none; gap: 8px; align-items: center; }
+.subject-name-edit.open { display: flex; }
+.subject-name-view.hidden { display: none; }
+
+/* Раскрывающаяся форма новой папки в тулбаре */
+.new-folder-form { display: none; gap: 8px; margin: 0; }
+.new-folder-form.open { display: flex; }
+
+/* Кликабельная подсказка в пустой папке */
+.empty-add {
+  display: block; padding: 10px 0; color: var(--muted); font-size: 13px;
+  text-decoration: none; border: 1px dashed var(--border-strong); border-radius: 8px; text-align: center;
+}
+.empty-add:hover { color: var(--accent); border-color: var(--accent); }
+
 
 /* Хаб субъектов */
 .subject-grid {

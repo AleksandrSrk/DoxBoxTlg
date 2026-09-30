@@ -11,25 +11,40 @@
 
 {% macro initials(name) %}{% set parts = name.split() %}{{ (parts[0][0] if parts|length > 0 else '') ~ (parts[1][0] if parts|length > 1 else '') }}{% endmacro %}
 
-<div class="subject-header">
-  <div class="subject-header-name">
-    <div class="avatar avatar-{{ subject.id % 4 }}">{{ initials(subject.name)|upper }}</div>
-    <form method="post" action="/admin/subjects/{{ subject.id }}/rename" class="inline-form">
-      <input type="text" name="name" value="{{ subject.name }}">
-      <button type="submit">Сохранить</button>
-    </form>
+<div class="subject-identity">
+  <div class="subject-identity-name">
+    <div class="avatar avatar-lg avatar-{{ subject.id % 4 }}">{{ initials(subject.name)|upper }}</div>
+    <div>
+      <div class="subject-name-view" id="name-view">
+        <span class="subject-name-text">{{ subject.name }}</span>
+        <button type="button" class="icon-btn" title="Переименовать"
+                onclick="document.getElementById('name-view').classList.add('hidden'); document.getElementById('name-edit').classList.add('open')">
+          <i class="ti ti-pencil"></i>
+        </button>
+      </div>
+      <form method="post" action="/admin/subjects/{{ subject.id }}/rename" class="subject-name-edit" id="name-edit">
+        <input type="text" name="name" value="{{ subject.name }}" autofocus>
+        <button type="submit">Сохранить</button>
+      </form>
+    </div>
   </div>
   <form method="post" action="/admin/subjects/{{ subject.id }}/delete"
         onsubmit="return confirm('Удалить субъекта? Если есть документы — не даст.');">
-    <button type="submit" class="btn-danger">Удалить субъекта</button>
+    <button type="submit" class="icon-btn icon-btn-danger" title="Удалить субъекта"><i class="ti ti-trash"></i></button>
   </form>
 </div>
 
 <div class="toolbar">
-  <a class="btn" href="/admin/documents/new?subject_id={{ subject.id }}">+ Документ</a>
-  <form method="post" action="/admin/subjects/{{ subject.id }}/folders" class="inline-form">
-    <input type="text" name="name" placeholder="Новая папка">
-    <button type="submit">+ Папка</button>
+  <a class="icon-btn icon-btn-lg" href="/admin/documents/new?subject_id={{ subject.id }}" title="Добавить документ">
+    <i class="ti ti-file-plus"></i>
+  </a>
+  <button type="button" class="icon-btn icon-btn-lg" title="Новая папка"
+          onclick="document.getElementById('new-folder-form').classList.toggle('open')">
+    <i class="ti ti-folder-plus"></i>
+  </button>
+  <form method="post" action="/admin/subjects/{{ subject.id }}/folders" class="new-folder-form" id="new-folder-form">
+    <input type="text" name="name" placeholder="Название папки" autofocus>
+    <button type="submit">Создать</button>
   </form>
 </div>
 
@@ -63,7 +78,7 @@
     </form>
   </div>
   {% for d in docs_by_folder.get(f.id, []) %}{{ doc_row(d) }}{% else %}
-  <div class="muted" style="padding:6px 0;">Пусто</div>
+  <a class="empty-add" href="/admin/documents/new?subject_id={{ subject.id }}&folder_id={{ f.id }}">+ добавить сюда</a>
   {% endfor %}
 </div>
 {% endfor %}
