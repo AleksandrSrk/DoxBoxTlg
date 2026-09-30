@@ -36,7 +36,7 @@ body {
   font-size: 12px; padding: 6px 13px; border-radius: 20px; white-space: nowrap; cursor: pointer;
   background: var(--surface); color: var(--muted); border: 1px solid var(--border-strong);
 }
-.chip.active { background: var(--text); color: #fff; border-color: var(--text); }
+.chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 .subject-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); }
 .subject-row {
