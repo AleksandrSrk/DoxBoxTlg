@@ -1,5 +1,24 @@
 const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); }
+
+function applySafeArea() {
+  if (!tg) return;
+  const content = tg.contentSafeAreaInset || {};
+  const system = tg.safeAreaInset || {};
+  const top = (content.top || 0) + (system.top || 0);
+  const bottom = (content.bottom || 0) + (system.bottom || 0);
+  document.documentElement.style.setProperty("--tg-safe-top", top + "px");
+  document.documentElement.style.setProperty("--tg-safe-bottom", bottom + "px");
+}
+
+if (tg) {
+  tg.ready();
+  tg.expand();
+  applySafeArea();
+  tg.onEvent?.("contentSafeAreaChanged", applySafeArea);
+  tg.onEvent?.("safeAreaChanged", applySafeArea);
+  tg.onEvent?.("fullscreenChanged", applySafeArea);
+}
+
 const initData = tg?.initData || "";
 
 async function api(path) {
