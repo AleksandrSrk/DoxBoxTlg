@@ -1,15 +1,20 @@
 """JSON API для Telegram Mini App — только чтение, все роуты защищены
 проверкой initData + whitelist (см. telegram_auth.py)."""
 
+import os
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+import requests
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, func, or_
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
+from download_tokens import make_download_token
 from models import Subject, Folder, Category, Document
 from telegram_auth import require_telegram_user
+
+BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 
 router = APIRouter(prefix="/api", dependencies=[Depends(require_telegram_user)])
 
@@ -112,3 +117,34 @@ def search_documents(
         )
     query = query.order_by(Document.issue_date.desc())
     return [doc_to_dict(d) for d in db.scalars(query).all()]
+
+
+@router.post("/documents/{doc_id}/download-link")
+def get_download_link(
+    doc_id: int,
+    request: Request,
+    user: dict = Depends(require_telegram_user),
+    db: Session = Depends(get_db),
+):
+    """Готовит подписанную ссылку на файл (для Telegram.WebApp.downloadFile)
+    и параллельно шлёт тот же файл ботом в чат — дублирующая копия."""
+    doc = db.get(Document, doc_id)
+    if not doc or not doc.drive_file_id:
+        raise HTTPException(404, "Файл не найден или ссылка на Drive не задана")
+
+    token, exp = make_download_token(doc_id)
+    base = str(request.base_url).rstrip("/")
+    file_url = f"{base}/files/{doc_id}?exp={exp}&token={token}"
+
+    chat_id = user.get("id")
+    if chat_id and BOT_TOKEN:
+        try:
+            requests.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
+                data={"chat_id": chat_id, "document": file_url},
+                timeout=15,
+            )
+        except requests.RequestException:
+            pass  # popup для скачивания в мини-аппе важнее, не роняем запрос из-за копии в чат
+
+    return {"url": file_url, "file_name": doc.title}

@@ -21,8 +21,9 @@ if (tg) {
 
 const initData = tg?.initData || "";
 
-async function api(path) {
+async function api(path, options = {}) {
   const res = await fetch(path, {
+    method: options.method || "GET",
     headers: initData ? { "X-Telegram-Init-Data": initData } : {},
   });
   if (!res.ok) throw new Error(await res.text());
@@ -104,7 +105,7 @@ function renderDocCard(d) {
     </div>
     <button class="toggle-btn" data-toggle="${d.id}">Раскрыть подробнее ⌄</button>
     <div class="doc-actions">
-      <button data-download="${d.id}" disabled title="Появится после подключения Google Drive">⬇ Скачать</button>
+      <button data-download="${d.id}">⬇ Скачать</button>
       <button data-copy="${d.id}">⧉ Скопировать</button>
     </div>
   </div>`;
@@ -122,6 +123,29 @@ function attachDocCardEvents(container) {
   container.querySelectorAll("[data-copy]").forEach(btn => {
     btn.addEventListener("click", () => copyDoc(btn.dataset.copy));
   });
+  container.querySelectorAll("[data-download]").forEach(btn => {
+    btn.addEventListener("click", () => downloadDoc(btn.dataset.download, btn));
+  });
+}
+
+async function downloadDoc(id, btn) {
+  const original = btn.textContent;
+  btn.textContent = "…";
+  btn.disabled = true;
+  try {
+    const res = await api(`/api/documents/${id}/download-link`, { method: "POST" });
+    if (tg?.downloadFile) {
+      tg.downloadFile({ url: res.url, file_name: res.file_name }, () => {});
+      toast("Скачивание запущено, копия придёт в чат с ботом");
+    } else {
+      window.open(res.url, "_blank");
+    }
+  } catch (e) {
+    toast("Не получилось скачать — проверь ссылку на Drive у документа");
+  } finally {
+    btn.textContent = original;
+    btn.disabled = false;
+  }
 }
 
 function copyDoc(id) {

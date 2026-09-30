@@ -4,13 +4,15 @@ from typing import Optional
 from urllib.parse import urlencode
 
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
 from database import SessionLocal, init_db, parse_drive_file_id
+from download_tokens import verify_download_token
+from drive import download_file_bytes, get_file_metadata
 from models import Subject, Folder, Category, Document
 from api import router as api_router
 
@@ -347,3 +349,30 @@ def delete_document(doc_id: int, request: Request, db: Session = Depends(get_db)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+
+
+@app.get("/files/{doc_id}")
+def download_file(
+    doc_id: int, exp: int, token: str, db: Session = Depends(get_db)
+):
+    """Отдаёт файл из Google Drive по подписанной ссылке (без initData —
+    её не умеет слать ни Telegram.WebApp.downloadFile, ни sendDocument)."""
+    if not verify_download_token(doc_id, exp, token):
+        raise HTTPException(403, "Ссылка недействительна или истекла")
+
+    doc = db.get(Document, doc_id)
+    if not doc or not doc.drive_file_id:
+        raise HTTPException(404, "Файл не найден")
+
+    meta = get_file_metadata(doc.drive_file_id)
+    file_bytes = download_file_bytes(doc.drive_file_id)
+    filename = meta.get("name", doc.title)
+
+    return StreamingResponse(
+        file_bytes,
+        media_type=meta.get("mimeType", "application/octet-stream"),
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Access-Control-Allow-Origin": "https://web.telegram.org",
+        },
+    )
