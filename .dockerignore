@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+tools/
+.git/
+.env
+*.db
+*.pyc
+.vscode/
+.idea/
