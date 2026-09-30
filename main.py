@@ -16,6 +16,14 @@ from drive import download_file_bytes, get_file_metadata
 from models import Subject, Folder, Category, Document
 from api import router as api_router
 
+
+def content_disposition(filename: str) -> str:
+    """HTTP-заголовки не умеют напрямую нести не-latin1 символы (кириллицу) —
+    кодируем по RFC 5987, plus ASCII-запасной вариант для старых клиентов."""
+    from urllib.parse import quote
+    ascii_fallback = filename.encode("ascii", errors="ignore").decode("ascii").strip() or "file"
+    return f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(filename)}"
+
 DEFAULT_CATEGORIES = ["Паспорт", "Загран", "Полис ОМС", "СНИЛС", "ИНН", "СОР", "СОБ"]
 
 
@@ -82,17 +90,30 @@ def subject_detail_page(subject_id: int, request: Request, db: Session = Depends
 
 
 @app.post("/admin/subjects")
-def create_subject(name: str = Form(...), db: Session = Depends(get_db)):
-    db.add(Subject(name=name.strip()))
+def create_subject(
+    name: str = Form(...),
+    birth_date: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    db.add(Subject(
+        name=name.strip(),
+        birth_date=date.fromisoformat(birth_date) if birth_date else None,
+    ))
     db.commit()
     return RedirectResponse("/admin", status_code=303)
 
 
 @app.post("/admin/subjects/{subject_id}/rename")
-def rename_subject(subject_id: int, name: str = Form(...), db: Session = Depends(get_db)):
+def rename_subject(
+    subject_id: int,
+    name: str = Form(...),
+    birth_date: str = Form(""),
+    db: Session = Depends(get_db),
+):
     subject = db.get(Subject, subject_id)
     if subject:
         subject.name = name.strip()
+        subject.birth_date = date.fromisoformat(birth_date) if birth_date else None
         db.commit()
     return RedirectResponse(f"/admin/subjects/{subject_id}", status_code=303)
 
@@ -249,7 +270,7 @@ def edit_document_form(doc_id: int, request: Request, db: Session = Depends(get_
 
 
 def _parsed_fields(
-    subject_id, category_id, folder_id, title, series, number, issued_by,
+    subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
     issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
     is_primary, drive_link,
 ):
@@ -262,6 +283,7 @@ def _parsed_fields(
         series=series.strip() or None,
         number=number.strip() or None,
         issued_by=issued_by.strip() or None,
+        extra_number=extra_number.strip() or None,
         issue_date=date.fromisoformat(issue_date) if issue_date else None,
         valid_from=date.fromisoformat(valid_from) if valid_from else None,
         valid_until=date.fromisoformat(valid_until) if valid_until else None,
@@ -282,6 +304,7 @@ def create_document(
     series: str = Form(""),
     number: str = Form(""),
     issued_by: str = Form(""),
+    extra_number: str = Form(""),
     issue_date: str = Form(""),
     valid_from: str = Form(""),
     valid_until: str = Form(""),
@@ -292,7 +315,7 @@ def create_document(
     db: Session = Depends(get_db),
 ):
     fields = _parsed_fields(
-        subject_id, category_id, folder_id, title, series, number, issued_by,
+        subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
         issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
         is_primary, drive_link,
     )
@@ -311,6 +334,7 @@ def update_document(
     series: str = Form(""),
     number: str = Form(""),
     issued_by: str = Form(""),
+    extra_number: str = Form(""),
     issue_date: str = Form(""),
     valid_from: str = Form(""),
     valid_until: str = Form(""),
@@ -324,7 +348,7 @@ def update_document(
     if not doc:
         raise HTTPException(404, "Документ не найден")
     fields = _parsed_fields(
-        subject_id, category_id, folder_id, title, series, number, issued_by,
+        subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
         issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
         is_primary, drive_link,
     )
@@ -344,11 +368,6 @@ def delete_document(doc_id: int, request: Request, db: Session = Depends(get_db)
     return RedirectResponse(
         request.headers.get("referer", "/admin/documents"), status_code=303
     )
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
 
 
 @app.get("/files/{doc_id}")
@@ -372,7 +391,63 @@ def download_file(
         file_bytes,
         media_type=meta.get("mimeType", "application/octet-stream"),
         headers={
-            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Disposition": content_disposition(filename),
             "Access-Control-Allow-Origin": "https://web.telegram.org",
         },
     )
+
+
+# ---------- Карточка документа ----------
+
+EDITABLE_DOC_FIELDS = {
+    "series", "number", "issued_by", "extra_number",
+    "issue_date", "valid_from", "valid_until",
+}
+_DATE_FIELDS = {"issue_date", "valid_from", "valid_until"}
+
+
+@app.get("/admin/documents/{doc_id}")
+def document_detail_page(doc_id: int, request: Request, db: Session = Depends(get_db)):
+    doc = db.get(Document, doc_id)
+    if not doc:
+        raise HTTPException(404, "Документ не найден")
+    return templates.TemplateResponse(request, "document_detail.html", {"doc": doc})
+
+
+@app.post("/admin/documents/{doc_id}/field")
+def update_document_field(
+    doc_id: int, field: str = Form(...), value: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    if field not in EDITABLE_DOC_FIELDS:
+        raise HTTPException(400, "Это поле нельзя редактировать так — только через полную форму")
+    doc = db.get(Document, doc_id)
+    if not doc:
+        raise HTTPException(404, "Документ не найден")
+    if field in _DATE_FIELDS:
+        setattr(doc, field, date.fromisoformat(value) if value else None)
+    else:
+        setattr(doc, field, value.strip() or None)
+    db.commit()
+    return RedirectResponse(f"/admin/documents/{doc_id}", status_code=303)
+
+
+@app.get("/admin/documents/{doc_id}/download")
+def admin_download_document(doc_id: int, db: Session = Depends(get_db)):
+    """В админке отдельный токен не нужен — весь /admin и так под Basic Auth."""
+    doc = db.get(Document, doc_id)
+    if not doc or not doc.drive_file_id:
+        raise HTTPException(404, "Файл не найден или ссылка на Drive не задана")
+    meta = get_file_metadata(doc.drive_file_id)
+    file_bytes = download_file_bytes(doc.drive_file_id)
+    filename = meta.get("name", doc.title)
+    return StreamingResponse(
+        file_bytes,
+        media_type=meta.get("mimeType", "application/octet-stream"),
+        headers={"Content-Disposition": content_disposition(filename)},
+    )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

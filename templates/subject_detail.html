@@ -17,6 +17,7 @@
     <div>
       <div class="subject-name-view" id="name-view">
         <span class="subject-name-text">{{ subject.name }}</span>
+        {% if subject.birth_date %}<span class="muted">{{ subject.birth_date }}</span>{% endif %}
         <button type="button" class="icon-btn" title="Переименовать"
                 onclick="document.getElementById('name-view').classList.add('hidden'); document.getElementById('name-edit').classList.add('open')">
           <i class="ti ti-pencil"></i>
@@ -24,6 +25,7 @@
       </div>
       <form method="post" action="/admin/subjects/{{ subject.id }}/rename" class="subject-name-edit" id="name-edit">
         <input type="text" name="name" value="{{ subject.name }}" autofocus>
+        <input type="date" name="birth_date" value="{{ subject.birth_date or '' }}">
         <button type="submit">Сохранить</button>
       </form>
     </div>
@@ -51,7 +53,7 @@
 {% macro doc_row(d) %}
 <div class="doc-row">
   <div class="doc-row-title">
-    <span class="doc-title">{{ d.title }}</span>
+    <a class="doc-title" href="/admin/documents/{{ d.id }}">{{ d.title }}</a>
     <span class="badge">{{ d.category.name }}</span>
     {% if d.is_primary %}<span class="badge badge-amber">★ основной</span>{% endif %}
   </div>

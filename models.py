@@ -13,6 +13,7 @@ class Subject(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200))
+    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     folders: Mapped[list["Folder"]] = relationship(back_populates="subject")
@@ -55,6 +56,9 @@ class Document(Base):
     series: Mapped[str | None] = mapped_column(String(50), nullable=True)
     number: Mapped[str | None] = mapped_column(String(50), nullable=True)
     issued_by: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    # универсальное поле под то, что не влезает в серию/номер: код
+    # подразделения у паспорта, номер записи акта у свидетельства и т.п.
+    extra_number: Mapped[str | None] = mapped_column(String(300), nullable=True)
 
     # дата самого документа — по ней сортировка "самый свежий"
     issue_date: Mapped[date | None] = mapped_column(Date, nullable=True)

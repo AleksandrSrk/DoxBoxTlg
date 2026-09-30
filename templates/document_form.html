@@ -54,6 +54,9 @@
     <label>Номер <input type="text" name="number" value="{{ doc.number if doc else '' }}"></label>
     <label>Дата выдачи <input type="date" name="issue_date" value="{{ doc.issue_date if doc else '' }}"></label>
     <label>Кем выдан <input type="text" name="issued_by" value="{{ doc.issued_by if doc else '' }}"></label>
+    <label class="span-2">Доп. номер <span class="muted">(код подразделения, номер записи акта и т.п.)</span>
+      <input type="text" name="extra_number" value="{{ doc.extra_number if doc else '' }}">
+    </label>
   </div>
 </div>
 

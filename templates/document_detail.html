@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ doc.title }} — doxBot{% endblock %}
+{% block content %}
+
+<a href="/admin/subjects/{{ doc.subject_id }}" class="back-link">← {{ doc.subject.name }}</a>
+
+{% macro row(label, field_name, value, is_date=False) %}
+<div class="detail-row">
+  <span class="detail-label">{{ label }}</span>
+  <span class="detail-value" id="view-{{ field_name }}">{{ value or "—" }}</span>
+  <div class="detail-edit" id="edit-{{ field_name }}">
+    <form method="post" action="/admin/documents/{{ doc.id }}/field" class="inline-form">
+      <input type="hidden" name="field" value="{{ field_name }}">
+      <input type="{{ 'date' if is_date else 'text' }}" name="value" value="{{ value or '' }}" autofocus>
+      <button type="submit">✓</button>
+    </form>
+  </div>
+  <div class="detail-actions">
+    <button type="button" class="icon-btn" onclick="copyValue('{{ (value or '')|e }}')" title="Скопировать"><i class="ti ti-copy"></i></button>
+    <button type="button" class="icon-btn" onclick="toggleEdit('{{ field_name }}')" title="Править"><i class="ti ti-pencil"></i></button>
+  </div>
+</div>
+{% endmacro %}
+
+<div class="doc-card">
+  <div class="doc-card-tags">
+    <span class="badge">{{ doc.category.name }}</span>
+    {% if doc.is_primary %}<span class="badge badge-amber">★ основной</span>{% endif %}
+    {% if doc.folder %}<span class="badge">📁 {{ doc.folder.name }}</span>{% endif %}
+  </div>
+  <h1>{{ doc.title }}</h1>
+
+  {{ row("Серия", "series", doc.series) }}
+  {{ row("Номер", "number", doc.number) }}
+  {{ row("Доп. номер", "extra_number", doc.extra_number) }}
+  {{ row("Дата выдачи", "issue_date", doc.issue_date, is_date=True) }}
+  {{ row("Кем выдан", "issued_by", doc.issued_by) }}
+  {{ row("Действует с", "valid_from", doc.valid_from, is_date=True) }}
+  {{ row("Действует до", "valid_until", doc.valid_until, is_date=True) }}
+
+  {% if doc.notify_before_expiry %}
+  <div class="detail-row">
+    <span class="detail-label">Напоминание</span>
+    <span class="detail-value">
+      {{ {"week": "за неделю", "month": "за месяц", "2months": "за 2 месяца"}.get(doc.notify_period, "—") }}
+    </span>
+  </div>
+  {% endif %}
+
+  <div class="doc-card-footer">
+    <a class="btn" href="/admin/documents/{{ doc.id }}/download"><i class="ti ti-download"></i> Скачать</a>
+    <a class="btn-secondary" href="/admin/documents/{{ doc.id }}/edit">Полное редактирование</a>
+  </div>
+</div>
+
+<script>
+function toggleEdit(field) {
+  document.getElementById('view-' + field).classList.toggle('hidden');
+  document.getElementById('edit-' + field).classList.toggle('open');
+}
+function copyValue(text) {
+  if (!text) return;
+  navigator.clipboard.writeText(text);
+}
+</script>
+
+{% endblock %}

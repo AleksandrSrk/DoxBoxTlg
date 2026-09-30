@@ -24,7 +24,7 @@
 <tr><th>Название</th><th>Категория</th><th>Субъект</th><th>Дата выдачи</th><th>Осн.</th><th></th></tr>
 {% for d in documents %}
 <tr>
-  <td>{{ d.title }}</td>
+  <td><a href="/admin/documents/{{ d.id }}">{{ d.title }}</a></td>
   <td>{{ d.category.name }}</td>
   <td><a href="/admin/subjects/{{ d.subject_id }}">{{ d.subject.name }}</a></td>
   <td>{{ d.issue_date or "—" }}</td>

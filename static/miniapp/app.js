@@ -80,7 +80,7 @@ function debounce(fn, ms) {
 
 function field(label, value) {
   if (!value) return "";
-  return `<div><div class="doc-field-label">${label}</div><div class="doc-field-value">${escapeHtml(value)}</div></div>`;
+  return `<div><div class="doc-field-label">${label}</div><div class="doc-field-value copyable">${escapeHtml(value)}</div></div>`;
 }
 
 function renderDocCard(d) {
@@ -99,9 +99,10 @@ function renderDocCard(d) {
       ${field("Дата выдачи", formatDate(d.issue_date))}
     </div>
     <div class="doc-details" id="details-${d.id}">
-      <div class="doc-detail-row"><span>Кем выдан</span><span>${escapeHtml(d.issued_by || "—")}</span></div>
-      <div class="doc-detail-row"><span>Действует</span><span>${validityText(d)}</span></div>
-      <div class="doc-detail-row"><span>Субъект</span><span>${escapeHtml(d.subject_name)}</span></div>
+      <div class="doc-detail-row"><span>Кем выдан</span><span class="copyable">${escapeHtml(d.issued_by || "—")}</span></div>
+      ${d.extra_number ? `<div class="doc-detail-row"><span>Доп. номер</span><span class="copyable">${escapeHtml(d.extra_number)}</span></div>` : ""}
+      <div class="doc-detail-row"><span>Действует</span><span class="copyable">${validityText(d)}</span></div>
+      <div class="doc-detail-row"><span>Субъект</span><span class="copyable">${escapeHtml(d.subject_name)}</span></div>
     </div>
     <button class="toggle-btn" data-toggle="${d.id}">Раскрыть подробнее ⌄</button>
     <div class="doc-actions">
@@ -126,22 +127,44 @@ function attachDocCardEvents(container) {
   container.querySelectorAll("[data-download]").forEach(btn => {
     btn.addEventListener("click", () => downloadDoc(btn.dataset.download, btn));
   });
+  container.querySelectorAll(".copyable").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const text = el.textContent.trim();
+      if (!text || text === "—") return;
+      navigator.clipboard.writeText(text).then(() => {
+        toast("Скопировано");
+        tg?.HapticFeedback?.notificationOccurred("success");
+      });
+    });
+  });
 }
 
 async function downloadDoc(id, btn) {
   const original = btn.textContent;
   btn.textContent = "…";
   btn.disabled = true;
+  let res;
   try {
-    const res = await api(`/api/documents/${id}/download-link`, { method: "POST" });
-    if (tg?.downloadFile) {
-      tg.downloadFile({ url: res.url, file_name: res.file_name }, () => {});
-      toast("Скачивание запущено, копия придёт в чат с ботом");
+    res = await api(`/api/documents/${id}/download-link`, { method: "POST" });
+  } catch (e) {
+    toast("Не удалось получить ссылку: " + (e?.message || e));
+    btn.textContent = original;
+    btn.disabled = false;
+    return;
+  }
+  try {
+    if (typeof tg?.downloadFile === "function") {
+      tg.downloadFile({ url: res.url, file_name: res.file_name }, (accepted) => {
+        toast(accepted ? "Сохранено" : "Отменено");
+      });
+      toast("Копия придёт в чат с ботом");
     } else {
+      toast("downloadFile недоступен в этом клиенте, открываю ссылкой");
       window.open(res.url, "_blank");
     }
-  } catch (e) {
-    toast("Не получилось скачать — проверь ссылку на Drive у документа");
+  } catch (dlErr) {
+    toast("Ошибка downloadFile: " + (dlErr?.message || dlErr));
   } finally {
     btn.textContent = original;
     btn.disabled = false;

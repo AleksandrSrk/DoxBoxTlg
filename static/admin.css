@@ -156,7 +156,8 @@ input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color:
 }
 .doc-row:last-child { border-bottom: none; }
 .doc-row-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.doc-title { font-size: 14px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-title { font-size: 14px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.doc-title:hover { color: var(--accent); text-decoration: underline; }
 .doc-row-date { font-size: 13px; text-align: right; color: var(--muted); }
 .doc-row-actions { display: flex; gap: 6px; justify-content: flex-end; }
 
@@ -189,3 +190,31 @@ input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color:
 
 .form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
 .form label.checkbox { flex-direction: row; align-items: center; gap: 8px; }
+
+/* Карточка просмотра документа */
+.doc-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px 26px; max-width: 640px;
+}
+.doc-card-tags { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.doc-card h1 { font-size: 22px; margin: 0 0 18px; }
+
+.detail-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-top: 1px solid var(--border);
+}
+.detail-label { font-size: 13px; color: var(--muted); min-width: 130px; flex-shrink: 0; }
+.detail-value { font-size: 14px; color: var(--text); flex: 1; }
+.detail-value.hidden { display: none; }
+.detail-edit { display: none; flex: 1; }
+.detail-edit.open { display: block; }
+.detail-edit .inline-form { margin-bottom: 0; }
+.detail-edit input { width: 100%; }
+.detail-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.doc-card-footer { display: flex; gap: 10px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+.btn-secondary {
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong);
+  padding: 10px 18px; border-radius: 10px; font-size: 14px; text-decoration: none;
+}
+.btn-secondary:hover { background: var(--surface); }

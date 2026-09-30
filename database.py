@@ -21,9 +21,20 @@ def parse_drive_file_id(link: str) -> str | None:
 
 def init_db():
     """Создаёт обычные таблицы + виртуальную FTS5-таблицу с триггерами
-    синхронизации, если их ещё нет."""
+    синхронизации, если их ещё нет. Плюс лёгкая миграция для колонок,
+    добавленных уже после первого релиза — на живой базе Base.metadata.create_all
+    таблицы не трогает, если они уже есть, поэтому новые поля добавляем сами."""
     Base.metadata.create_all(bind=engine)
     with engine.connect() as conn:
+        subj_cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(subjects)")}
+        if "birth_date" not in subj_cols:
+            conn.exec_driver_sql("ALTER TABLE subjects ADD COLUMN birth_date DATE")
+
+        doc_cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(documents)")}
+        if "extra_number" not in doc_cols:
+            conn.exec_driver_sql("ALTER TABLE documents ADD COLUMN extra_number VARCHAR(300)")
+        conn.commit()
+
         conn.exec_driver_sql("""
             CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts USING fts5(
                 title, series, number, issued_by,
