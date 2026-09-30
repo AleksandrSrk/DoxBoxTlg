@@ -7,70 +7,92 @@
       action="{{ '/admin/documents/' ~ doc.id if doc else '/admin/documents' }}"
       class="form">
 
-  <label>Субъект
-    <select name="subject_id" required>
-      {% for s in subjects %}
-      <option value="{{ s.id }}"
-        {% if (doc and doc.subject_id==s.id) or (not doc and preselect_subject_id==s.id) %}selected{% endif %}>
-        {{ s.name }}
-      </option>
-      {% endfor %}
-    </select>
-  </label>
+<div class="form-section">
+  <h3>Основное</h3>
+  <div class="form-grid">
+    <label class="span-2">Субъект
+      <select name="subject_id" required>
+        {% for s in subjects %}
+        <option value="{{ s.id }}"
+          {% if (doc and doc.subject_id==s.id) or (not doc and preselect_subject_id==s.id) %}selected{% endif %}>
+          {{ s.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
 
-  <label>Папка (необязательно)
-    <select name="folder_id">
-      <option value="">— без папки —</option>
-      {% for f in folders %}
-      <option value="{{ f.id }}"
-        {% if (doc and doc.folder_id==f.id) or (not doc and preselect_folder_id==f.id) %}selected{% endif %}>
-        {{ f.subject.name }} / {{ f.name }}
-      </option>
-      {% endfor %}
-    </select>
-  </label>
+    <label>Категория
+      <select name="category_id" required>
+        {% for c in categories %}
+        <option value="{{ c.id }}" {% if doc and doc.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
 
-  <label>Категория
-    <select name="category_id" required>
-      {% for c in categories %}
-      <option value="{{ c.id }}" {% if doc and doc.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>
-      {% endfor %}
-    </select>
-  </label>
+    <label>Папка (необязательно)
+      <select name="folder_id">
+        <option value="">— без папки —</option>
+        {% for f in folders %}
+        <option value="{{ f.id }}"
+          {% if (doc and doc.folder_id==f.id) or (not doc and preselect_folder_id==f.id) %}selected{% endif %}>
+          {{ f.subject.name }} / {{ f.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </label>
 
-  <label>Название <input type="text" name="title" value="{{ doc.title if doc else '' }}" required></label>
+    <label class="span-2">Название
+      <input type="text" name="title" value="{{ doc.title if doc else '' }}" required>
+    </label>
+  </div>
+</div>
 
-  <label>Серия <input type="text" name="series" value="{{ doc.series if doc else '' }}"></label>
-  <label>Номер <input type="text" name="number" value="{{ doc.number if doc else '' }}"></label>
-  <label>Кем выдан <input type="text" name="issued_by" value="{{ doc.issued_by if doc else '' }}"></label>
-  <label>Дата выдачи <input type="date" name="issue_date" value="{{ doc.issue_date if doc else '' }}"></label>
+<div class="form-section">
+  <h3>Реквизиты</h3>
+  <div class="form-grid">
+    <label>Серия <input type="text" name="series" value="{{ doc.series if doc else '' }}"></label>
+    <label>Номер <input type="text" name="number" value="{{ doc.number if doc else '' }}"></label>
+    <label>Дата выдачи <input type="date" name="issue_date" value="{{ doc.issue_date if doc else '' }}"></label>
+    <label>Кем выдан <input type="text" name="issued_by" value="{{ doc.issued_by if doc else '' }}"></label>
+  </div>
+</div>
 
-  <label>Действует с <input type="date" name="valid_from" value="{{ doc.valid_from if doc else '' }}"></label>
-  <label>Действует до <input type="date" name="valid_until" value="{{ doc.valid_until if doc else '' }}"></label>
+<div class="form-section">
+  <h3>Срок действия и напоминания</h3>
+  <div class="form-grid">
+    <label>Действует с <input type="date" name="valid_from" value="{{ doc.valid_from if doc else '' }}"></label>
+    <label>Действует до <input type="date" name="valid_until" value="{{ doc.valid_until if doc else '' }}"></label>
 
-  <label class="checkbox">
-    <input type="checkbox" name="notify_before_expiry" {% if doc and doc.notify_before_expiry %}checked{% endif %}>
-    Уведомить об окончании
-  </label>
+    <label class="checkbox span-2">
+      <input type="checkbox" name="notify_before_expiry" {% if doc and doc.notify_before_expiry %}checked{% endif %}>
+      Уведомить об окончании
+    </label>
 
-  <label>Срок напоминания
-    <select name="notify_period">
-      <option value="">—</option>
-      <option value="week" {% if doc and doc.notify_period=="week" %}selected{% endif %}>За неделю</option>
-      <option value="month" {% if doc and doc.notify_period=="month" %}selected{% endif %}>За месяц</option>
-      <option value="2months" {% if doc and doc.notify_period=="2months" %}selected{% endif %}>За 2 месяца</option>
-    </select>
-  </label>
+    <label class="span-2">Срок напоминания
+      <select name="notify_period">
+        <option value="">—</option>
+        <option value="week" {% if doc and doc.notify_period=="week" %}selected{% endif %}>За неделю</option>
+        <option value="month" {% if doc and doc.notify_period=="month" %}selected{% endif %}>За месяц</option>
+        <option value="2months" {% if doc and doc.notify_period=="2months" %}selected{% endif %}>За 2 месяца</option>
+      </select>
+    </label>
+  </div>
+</div>
 
-  <label class="checkbox">
-    <input type="checkbox" name="is_primary" {% if doc and doc.is_primary %}checked{% endif %}>
-    Основной документ в категории
-  </label>
+<div class="form-section">
+  <h3>Основной документ и файл</h3>
+  <div class="form-grid">
+    <label class="checkbox span-2">
+      <input type="checkbox" name="is_primary" {% if doc and doc.is_primary %}checked{% endif %}>
+      Основной документ в категории
+    </label>
 
-  <label>Ссылка на файл в Google Drive
-    <input type="url" name="drive_link" value="{{ doc.drive_link if doc else '' }}" required>
-  </label>
+    <label class="span-2">Ссылка на файл в Google Drive
+      <input type="url" name="drive_link" value="{{ doc.drive_link if doc else '' }}" required>
+    </label>
+  </div>
+</div>
 
-  <button type="submit" class="btn">Сохранить</button>
+<button type="submit" class="btn">Сохранить</button>
 </form>
 {% endblock %}

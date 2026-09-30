@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Субъекты — doxBot{% endblock %}
 {% block content %}
+
+{% macro initials(name) %}{% set parts = name.split() %}{{ (parts[0][0] if parts|length > 0 else '') ~ (parts[1][0] if parts|length > 1 else '') }}{% endmacro %}
+
 <h1>Субъекты</h1>
 
 <form method="post" action="/admin/subjects" class="inline-form">
@@ -11,8 +14,11 @@
 <div class="subject-grid">
 {% for s in subjects %}
 <a class="subject-card" href="/admin/subjects/{{ s.id }}">
-  <div class="subject-card-name">{{ s.name }}</div>
-  <div class="subject-card-count">{{ doc_counts.get(s.id, 0) }} документ{{ "ов" if doc_counts.get(s.id, 0) != 1 else "" }}</div>
+  <div class="avatar avatar-{{ s.id % 4 }}">{{ initials(s.name)|upper }}</div>
+  <div>
+    <div class="subject-card-name">{{ s.name }}</div>
+    <div class="subject-card-count">{{ doc_counts.get(s.id, 0) }} документ{{ "ов" if doc_counts.get(s.id, 0) != 1 else "" }}</div>
+  </div>
 </a>
 {% endfor %}
 </div>

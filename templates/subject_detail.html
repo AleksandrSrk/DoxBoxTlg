@@ -9,11 +9,16 @@
 <div class="error-banner"><i class="ti ti-alert-triangle"></i> {{ error }}</div>
 {% endif %}
 
+{% macro initials(name) %}{% set parts = name.split() %}{{ (parts[0][0] if parts|length > 0 else '') ~ (parts[1][0] if parts|length > 1 else '') }}{% endmacro %}
+
 <div class="subject-header">
-  <form method="post" action="/admin/subjects/{{ subject.id }}/rename" class="inline-form">
-    <input type="text" name="name" value="{{ subject.name }}">
-    <button type="submit">Сохранить</button>
-  </form>
+  <div class="subject-header-name">
+    <div class="avatar avatar-{{ subject.id % 4 }}">{{ initials(subject.name)|upper }}</div>
+    <form method="post" action="/admin/subjects/{{ subject.id }}/rename" class="inline-form">
+      <input type="text" name="name" value="{{ subject.name }}">
+      <button type="submit">Сохранить</button>
+    </form>
+  </div>
   <form method="post" action="/admin/subjects/{{ subject.id }}/delete"
         onsubmit="return confirm('Удалить субъекта? Если есть документы — не даст.');">
     <button type="submit" class="btn-danger">Удалить субъекта</button>
@@ -33,7 +38,7 @@
   <div class="doc-row-title">
     <span class="doc-title">{{ d.title }}</span>
     <span class="badge">{{ d.category.name }}</span>
-    {% if d.is_primary %}<span class="badge badge-accent">★ основной</span>{% endif %}
+    {% if d.is_primary %}<span class="badge badge-amber">★ основной</span>{% endif %}
   </div>
   <div class="doc-row-date muted">{{ d.issue_date or "—" }}</div>
   <div class="doc-row-actions">
