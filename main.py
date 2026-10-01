@@ -19,10 +19,17 @@ from api import router as api_router
 
 def content_disposition(filename: str) -> str:
     """HTTP-заголовки не умеют напрямую нести не-latin1 символы (кириллицу) —
-    кодируем по RFC 5987, plus ASCII-запасной вариант для старых клиентов."""
+    кодируем по RFC 5987, plus ASCII-запасной вариант для старых клиентов.
+    Если имя почти целиком кириллица (как у нас обычно и бывает), после
+    вычистки небезопасных символов от него может не остаться ничего
+    содержательного — тогда подставляем generic-имя с тем же расширением."""
     from urllib.parse import quote
-    ascii_fallback = filename.encode("ascii", errors="ignore").decode("ascii").strip() or "file"
-    return f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(filename)}"
+    ascii_name = filename.encode("ascii", errors="ignore").decode("ascii").strip()
+    base = ascii_name.rsplit(".", 1)[0] if "." in ascii_name else ascii_name
+    if not any(c.isalnum() for c in base):
+        ext = filename.rsplit(".", 1)[-1] if "." in filename else ""
+        ascii_name = f"document.{ext}" if ext else "document"
+    return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(filename)}"
 
 DEFAULT_CATEGORIES = ["Паспорт", "Загран", "Полис ОМС", "СНИЛС", "ИНН", "СОР", "СОБ"]
 
