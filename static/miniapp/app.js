@@ -255,15 +255,30 @@ async function renderSubject(id) {
 
   data.folders.forEach(f => {
     cacheDocs(f.documents);
-    html += `<div class="folder-block"><div class="folder-title">📁 ${escapeHtml(f.name)}</div>` +
-      (f.documents.length ? f.documents.map(renderDocCard).join("") : `<div class="empty">Пусто</div>`) +
-      `</div>`;
+    html += `<div class="folder-block">
+      <div class="folder-title" data-toggle-folder="folder-${f.id}">
+        <span>📁 ${escapeHtml(f.name)}</span>
+        <span class="folder-count">${f.documents.length}</span>
+        <span class="folder-chevron">⌄</span>
+      </div>
+      <div class="folder-docs open" id="folder-${f.id}">
+        ${f.documents.length ? f.documents.map(renderDocCard).join("") : `<div class="empty">Пусто</div>`}
+      </div>
+    </div>`;
   });
 
   if (data.documents_no_folder.length) {
     cacheDocs(data.documents_no_folder);
-    html += `<div class="folder-block"><div class="folder-title">Без папки</div>` +
-      data.documents_no_folder.map(renderDocCard).join("") + `</div>`;
+    html += `<div class="folder-block">
+      <div class="folder-title" data-toggle-folder="folder-none">
+        <span>Без папки</span>
+        <span class="folder-count">${data.documents_no_folder.length}</span>
+        <span class="folder-chevron">⌄</span>
+      </div>
+      <div class="folder-docs open" id="folder-none">
+        ${data.documents_no_folder.map(renderDocCard).join("")}
+      </div>
+    </div>`;
   }
 
   if (!data.folders.length && !data.documents_no_folder.length) {
@@ -272,6 +287,13 @@ async function renderSubject(id) {
 
   body.innerHTML = html;
   attachDocCardEvents(body);
+  body.querySelectorAll("[data-toggle-folder]").forEach(el => {
+    el.addEventListener("click", () => {
+      const docs = document.getElementById(el.dataset.toggleFolder);
+      const open = docs.classList.toggle("open");
+      el.querySelector(".folder-chevron").textContent = open ? "⌄" : "›";
+    });
+  });
 }
 
 function route() {

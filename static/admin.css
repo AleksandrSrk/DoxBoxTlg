@@ -146,8 +146,15 @@ input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color:
   display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
   padding-bottom: 12px; border-bottom: 1px solid var(--border);
 }
-.folder-name { font-size: 15px; font-weight: 600; flex: 1; display: flex; align-items: center; gap: 8px; color: var(--text); }
+.folder-name { font-size: 15px; font-weight: 600; flex: 1; display: flex; align-items: center; gap: 8px; color: var(--text); cursor: pointer; }
 .folder-name i { color: var(--muted); font-size: 17px; }
+.folder-chevron { transition: transform 0.15s; }
+.folder-count {
+  font-size: 12px; font-weight: 500; color: var(--muted); background: var(--surface-2);
+  padding: 2px 9px; border-radius: 10px;
+}
+.folder-docs { display: none; }
+.folder-docs.open { display: block; }
 
 /* Строки документов выровнены по колонкам: название — дата — действия */
 .doc-row {

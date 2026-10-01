@@ -71,7 +71,11 @@
 {% for f in folders %}
 <div class="folder-section">
   <div class="folder-head">
-    <span class="folder-name"><i class="ti ti-folder"></i> {{ f.name }}</span>
+    <span class="folder-name" onclick="toggleFolder('folder-docs-{{ f.id }}')">
+      <i class="ti ti-chevron-down folder-chevron" id="chevron-folder-docs-{{ f.id }}"></i>
+      <i class="ti ti-folder"></i> {{ f.name }}
+      <span class="folder-count">{{ docs_by_folder.get(f.id, [])|length }}</span>
+    </span>
     <a class="icon-btn icon-btn-lg" title="Добавить документ в эту папку"
        href="/admin/documents/new?subject_id={{ subject.id }}&folder_id={{ f.id }}"><i class="ti ti-plus"></i></a>
     <form method="post" action="/admin/folders/{{ f.id }}/delete"
@@ -79,21 +83,39 @@
       <button type="submit" class="icon-btn icon-btn-danger" title="Удалить папку"><i class="ti ti-trash"></i></button>
     </form>
   </div>
-  {% for d in docs_by_folder.get(f.id, []) %}{{ doc_row(d) }}{% else %}
-  <a class="empty-add" href="/admin/documents/new?subject_id={{ subject.id }}&folder_id={{ f.id }}">+ добавить сюда</a>
-  {% endfor %}
+  <div class="folder-docs open" id="folder-docs-{{ f.id }}">
+    {% for d in docs_by_folder.get(f.id, []) %}{{ doc_row(d) }}{% else %}
+    <a class="empty-add" href="/admin/documents/new?subject_id={{ subject.id }}&folder_id={{ f.id }}">+ добавить сюда</a>
+    {% endfor %}
+  </div>
 </div>
 {% endfor %}
 
 {% if docs_no_folder %}
 <div class="folder-section">
-  <div class="folder-head"><span class="folder-name">Без папки</span></div>
-  {% for d in docs_no_folder %}{{ doc_row(d) }}{% endfor %}
+  <div class="folder-head">
+    <span class="folder-name" onclick="toggleFolder('folder-docs-none')">
+      <i class="ti ti-chevron-down folder-chevron" id="chevron-folder-docs-none"></i>
+      Без папки
+      <span class="folder-count">{{ docs_no_folder|length }}</span>
+    </span>
+  </div>
+  <div class="folder-docs open" id="folder-docs-none">
+    {% for d in docs_no_folder %}{{ doc_row(d) }}{% endfor %}
+  </div>
 </div>
 {% endif %}
 
 {% if not folders and not docs_no_folder %}
 <p class="muted">Пока пусто — добавь папку или сразу документ.</p>
 {% endif %}
+
+<script>
+function toggleFolder(id) {
+  const el = document.getElementById(id);
+  const open = el.classList.toggle('open');
+  document.getElementById('chevron-' + id).className = open ? 'ti ti-chevron-down folder-chevron' : 'ti ti-chevron-right folder-chevron';
+}
+</script>
 
 {% endblock %}
