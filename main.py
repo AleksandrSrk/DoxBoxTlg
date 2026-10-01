@@ -94,7 +94,7 @@ async def no_cache_miniapp(request: Request, call_next):
     это явно, чтобы после каждого деплоя прилетала гарантированно свежая
     версия, а не вчерашняя закешированная."""
     response = await call_next(request)
-    if request.url.path.startswith("/static/miniapp/"):
+    if request.url.path.startswith("/static/miniapp/") or request.url.path == "/static/admin.css":
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
     return response
 

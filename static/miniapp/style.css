@@ -61,7 +61,11 @@ body {
   font-size: 11px; background: var(--surface-2); color: var(--muted);
   padding: 1px 7px; border-radius: 10px;
 }
-.folder-chevron { font-size: 13px; }
+.folder-chevron {
+  font-size: 19px; color: var(--muted); display: inline-block;
+  transition: transform 0.15s; line-height: 1;
+}
+.folder-chevron.collapsed { transform: rotate(-90deg); }
 .folder-docs { display: none; }
 .folder-docs.open { display: block; }
 

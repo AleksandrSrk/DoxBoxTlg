@@ -259,7 +259,7 @@ async function renderSubject(id) {
       <div class="folder-title" data-toggle-folder="folder-${f.id}">
         <span>📁 ${escapeHtml(f.name)}</span>
         <span class="folder-count">${f.documents.length}</span>
-        <span class="folder-chevron">⌄</span>
+        <span class="folder-chevron">▾</span>
       </div>
       <div class="folder-docs open" id="folder-${f.id}">
         ${f.documents.length ? f.documents.map(renderDocCard).join("") : `<div class="empty">Пусто</div>`}
@@ -273,7 +273,7 @@ async function renderSubject(id) {
       <div class="folder-title" data-toggle-folder="folder-none">
         <span>Без папки</span>
         <span class="folder-count">${data.documents_no_folder.length}</span>
-        <span class="folder-chevron">⌄</span>
+        <span class="folder-chevron">▾</span>
       </div>
       <div class="folder-docs open" id="folder-none">
         ${data.documents_no_folder.map(renderDocCard).join("")}
@@ -291,7 +291,7 @@ async function renderSubject(id) {
     el.addEventListener("click", () => {
       const docs = document.getElementById(el.dataset.toggleFolder);
       const open = docs.classList.toggle("open");
-      el.querySelector(".folder-chevron").textContent = open ? "⌄" : "›";
+      el.querySelector(".folder-chevron").classList.toggle("collapsed", !open);
     });
   });
 }
