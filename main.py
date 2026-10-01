@@ -88,6 +88,17 @@ templates = Jinja2Templates(directory="templates")
 app.include_router(api_router)
 
 
+@app.middleware("http")
+async def no_cache_miniapp(request: Request, call_next):
+    """Telegram иногда агрессивно кеширует статику мини-аппа — запрещаем
+    это явно, чтобы после каждого деплоя прилетала гарантированно свежая
+    версия, а не вчерашняя закешированная."""
+    response = await call_next(request)
+    if request.url.path.startswith("/static/miniapp/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    return response
+
+
 def get_db():
     db = SessionLocal()
     try:
