@@ -72,6 +72,7 @@ body {
 .doc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
 .doc-tags { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: var(--surface-2); color: var(--muted); }
+.tag.subject { background: var(--accent-fill); color: var(--accent); font-weight: 500; }
 .tag.primary { border: 1px solid var(--border-strong); background: none; }
 .tag.warn { background: var(--amber-fill); color: var(--amber-text); }
 .doc-title { font-size: 15px; font-weight: 500; margin-bottom: 10px; }

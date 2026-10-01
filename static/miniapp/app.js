@@ -88,6 +88,7 @@ function renderDocCard(d) {
   return `
   <div class="doc-card">
     <div class="doc-tags">
+      <span class="tag subject">${escapeHtml(d.subject_name)}</span>
       <span class="tag">${escapeHtml(d.category)}</span>
       ${d.is_primary ? `<span class="tag primary">★ Основной</span>` : ""}
       ${expiring ? `<span class="tag warn">${expiring}</span>` : ""}
