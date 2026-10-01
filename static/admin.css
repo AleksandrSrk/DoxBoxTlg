@@ -144,7 +144,7 @@ input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color:
 }
 .folder-head {
   display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  padding-bottom: 12px; border-bottom: 2px solid var(--border-strong);
 }
 .folder-name { font-size: 15px; font-weight: 600; flex: 1; display: flex; align-items: center; gap: 8px; color: var(--text); cursor: pointer; }
 .folder-name i { color: var(--muted); font-size: 17px; }
@@ -159,7 +159,7 @@ input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color:
 /* Строки документов выровнены по колонкам: название — дата — действия */
 .doc-row {
   display: grid; grid-template-columns: 1fr 100px auto; align-items: center; gap: 18px;
-  padding: 11px 0; border-bottom: 1px solid var(--border);
+  padding: 11px 0; border-bottom: 1px dashed var(--border);
 }
 .doc-row:last-child { border-bottom: none; }
 .doc-row-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
