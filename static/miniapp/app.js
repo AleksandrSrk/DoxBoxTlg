@@ -144,6 +144,7 @@ async function downloadDoc(id, btn) {
   const original = btn.textContent;
   btn.textContent = "…";
   btn.disabled = true;
+  toast("Отправляем…");
   let res;
   try {
     res = await api(`/api/documents/${id}/download-link`, { method: "POST" });
@@ -153,14 +154,15 @@ async function downloadDoc(id, btn) {
     btn.disabled = false;
     return;
   }
-  // Доставляем файл только через бота в чат — это надёжный канал.
-  // Родной попап Telegram.WebApp.downloadFile() сюда сознательно не
-  // подключаем: на части клиентов он показывает свою нативную ошибку
-  // ("url is not defined") поверх страницы, причём она не ловится через
-  // наш try/catch — значит это баг на стороне их приложения, а не нашего
-  // кода, и мы не можем ни поймать её, ни скрыть. Раз файл и так надёжно
-  // доставляется в чат, нет смысла вообще дёргать эту кривую функцию.
-  toast("Файл отправлен в чат с ботом");
+  // Доставляем файл только через бота в чат — это надёжный канал. Бэк
+  // дожидается настоящего ответа Telegram (res.delivered), так что тут
+  // честный статус, а не догадка. Родной попап Telegram.WebApp.downloadFile()
+  // сюда сознательно не подключаем: на части клиентов он показывает свою
+  // нативную ошибку ("url is not defined") поверх страницы, причём она не
+  // ловится через наш try/catch — значит это баг на стороне их приложения,
+  // а не нашего кода, и мы не можем ни поймать её, ни скрыть.
+  toast(res.delivered ? "Готово — файл в чате ✓" : "Telegram не принял файл, попробуй ещё раз");
+  tg?.HapticFeedback?.notificationOccurred(res.delivered ? "success" : "error");
   btn.textContent = original;
   btn.disabled = false;
 }

@@ -4,8 +4,8 @@
 import os
 from typing import Optional
 
-import requests
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select, func, or_
 from sqlalchemy.orm import Session
 
@@ -120,34 +120,35 @@ def search_documents(
     return [doc_to_dict(d) for d in db.scalars(query).all()]
 
 
-def _send_document_background(chat_id: int, file_url: str):
-    """Выполняется уже после того, как фронт получил ответ — поэтому
-    тут можно позволить себе щедрый таймаут, не задерживая попап скачивания
-    в мини-аппе: Telegram сам идёт и скачивает файл по этой ссылке, и это
-    не всегда укладывается в секунды."""
+async def _send_document(chat_id: int, file_url: str) -> bool:
+    """Ждём настоящий ответ Telegram (успех/конкретная ошибка), а не
+    стреляем и забываем — иначе фронт не может сказать пользователю правду.
+    async + httpx, чтобы это ожидание не блокировало остальной сервер."""
     try:
-        tg_resp = requests.post(
-            f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
-            data={"chat_id": chat_id, "document": file_url},
-            timeout=60,
-        )
-        if not tg_resp.ok:
-            print(f"sendDocument failed: {tg_resp.status_code} {tg_resp.text}")
-    except requests.RequestException as e:
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
+                data={"chat_id": chat_id, "document": file_url},
+            )
+        if not resp.is_success:
+            print(f"sendDocument failed: {resp.status_code} {resp.text}")
+            return False
+        return True
+    except httpx.HTTPError as e:
         print(f"sendDocument request error: {e}")
+        return False
 
 
 @router.post("/documents/{doc_id}/download-link")
-def get_download_link(
+async def get_download_link(
     doc_id: int,
     request: Request,
-    background_tasks: BackgroundTasks,
     user: dict = Depends(require_telegram_user),
     db: Session = Depends(get_db),
 ):
-    """Готовит подписанную ссылку на файл (для Telegram.WebApp.downloadFile)
-    и ставит отправку той же копии в чат отдельной фоновой задачей —
-    чтобы не держать фронт в ожидании, пока Telegram сам скачает файл."""
+    """Готовит подписанную ссылку на файл и дожидается, пока Telegram
+    реально подтвердит (или не подтвердит) доставку копии в чат —
+    фронт получает честный статус, а не догадки."""
     doc = db.get(Document, doc_id)
     if not doc or not doc.drive_file_id:
         raise HTTPException(404, "Файл не найден или ссылка на Drive не задана")
@@ -156,8 +157,9 @@ def get_download_link(
     base = str(request.base_url).rstrip("/")
     file_url = f"{base}/files/{doc_id}?exp={exp}&token={token}"
 
+    delivered = False
     chat_id = user.get("id")
     if chat_id and BOT_TOKEN:
-        background_tasks.add_task(_send_document_background, chat_id, file_url)
+        delivered = await _send_document(chat_id, file_url)
 
-    return {"url": file_url, "file_name": doc.title}
+    return {"url": file_url, "file_name": doc.title, "delivered": delivered}
