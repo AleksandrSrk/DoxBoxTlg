@@ -153,18 +153,17 @@ async function downloadDoc(id, btn) {
     btn.disabled = false;
     return;
   }
+  // бэк уже отправил файл ботом в чат — это надёжный канал, на нём и строим
+  // сообщение об успехе. Нативный попап пробуем следом как бонус: на части
+  // клиентов Telegram он падает с собственной ошибкой — это их баг, не наш,
+  // и раз файл и так доставлен, пользователю её видеть незачем.
+  toast("Файл отправлен в чат с ботом");
   try {
     if (typeof tg?.downloadFile === "function") {
-      tg.downloadFile({ url: res.url, file_name: res.file_name }, (accepted) => {
-        toast(accepted ? "Сохранено" : "Отменено");
-      });
-      toast("Копия придёт в чат с ботом");
-    } else {
-      toast("downloadFile недоступен в этом клиенте, открываю ссылкой");
-      window.open(res.url, "_blank");
+      tg.downloadFile({ url: res.url, file_name: res.file_name }, () => {});
     }
-  } catch (dlErr) {
-    toast("Ошибка downloadFile: " + (dlErr?.message || dlErr));
+  } catch (_) {
+    // молча игнорируем — см. комментарий выше
   } finally {
     btn.textContent = original;
     btn.disabled = false;
