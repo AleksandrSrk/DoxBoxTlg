@@ -324,6 +324,7 @@ def _parsed_fields(
     subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
     issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
     is_primary, drive_link, registration_address, registration_date,
+    birth_date, birth_place,
 ):
     """Общий разбор полей формы для создания и правки документа."""
     return dict(
@@ -337,6 +338,8 @@ def _parsed_fields(
         extra_number=extra_number.strip() or None,
         registration_address=registration_address.strip() or None,
         registration_date=date.fromisoformat(registration_date) if registration_date else None,
+        birth_date=date.fromisoformat(birth_date) if birth_date else None,
+        birth_place=birth_place.strip() or None,
         issue_date=date.fromisoformat(issue_date) if issue_date else None,
         valid_from=date.fromisoformat(valid_from) if valid_from else None,
         valid_until=date.fromisoformat(valid_until) if valid_until else None,
@@ -360,6 +363,8 @@ def create_document(
     extra_number: str = Form(""),
     registration_address: str = Form(""),
     registration_date: str = Form(""),
+    birth_date: str = Form(""),
+    birth_place: str = Form(""),
     issue_date: str = Form(""),
     valid_from: str = Form(""),
     valid_until: str = Form(""),
@@ -373,6 +378,7 @@ def create_document(
         subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
         issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
         is_primary, drive_link, registration_address, registration_date,
+        birth_date, birth_place,
     )
     db.add(Document(**fields))
     db.commit()
@@ -392,6 +398,8 @@ def update_document(
     extra_number: str = Form(""),
     registration_address: str = Form(""),
     registration_date: str = Form(""),
+    birth_date: str = Form(""),
+    birth_place: str = Form(""),
     issue_date: str = Form(""),
     valid_from: str = Form(""),
     valid_until: str = Form(""),
@@ -408,6 +416,7 @@ def update_document(
         subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
         issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
         is_primary, drive_link, registration_address, registration_date,
+        birth_date, birth_place,
     )
     for key, value in fields.items():
         setattr(doc, key, value)
@@ -463,8 +472,9 @@ EDITABLE_DOC_FIELDS = {
     "series", "number", "issued_by", "extra_number",
     "issue_date", "valid_from", "valid_until",
     "registration_address", "registration_date",
+    "birth_date", "birth_place",
 }
-_DATE_FIELDS = {"issue_date", "valid_from", "valid_until", "registration_date"}
+_DATE_FIELDS = {"issue_date", "valid_from", "valid_until", "registration_date", "birth_date"}
 
 
 @app.get("/admin/documents/{doc_id}")

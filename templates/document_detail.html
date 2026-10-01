@@ -43,6 +43,11 @@
   {{ row("Дата регистрации", "registration_date", doc.registration_date, is_date=True) }}
   {% endif %}
 
+  {% if doc.category.name in ["Паспорт", "СОР"] %}
+  {{ row("Дата рождения", "birth_date", doc.birth_date, is_date=True) }}
+  {{ row("Место рождения", "birth_place", doc.birth_place) }}
+  {% endif %}
+
   {% if doc.notify_before_expiry %}
   <div class="detail-row">
     <span class="detail-label">Напоминание</span>

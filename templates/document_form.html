@@ -22,7 +22,7 @@
     </label>
 
     <label>Категория
-      <select name="category_id" id="category-select" onchange="updateRegVisibility()" required>
+      <select name="category_id" id="category-select" onchange="updateCategoryVisibility()" required>
         {% for c in categories %}
         <option value="{{ c.id }}" {% if doc and doc.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
@@ -72,6 +72,18 @@
   </div>
 </div>
 
+<div class="form-section" id="birth-section">
+  <h3>Рождение <span class="muted">(только для паспорта и СОР)</span></h3>
+  <div class="form-grid">
+    <label>Дата рождения
+      <input type="date" name="birth_date" value="{{ doc.birth_date if doc else '' }}">
+    </label>
+    <label>Место рождения
+      <input type="text" name="birth_place" value="{{ doc.birth_place if doc else '' }}">
+    </label>
+  </div>
+</div>
+
 <div class="form-section">
   <h3>Срок действия и напоминания</h3>
   <div class="form-grid">
@@ -112,13 +124,15 @@
 </form>
 
 <script>
-function updateRegVisibility() {
+const REG_CATEGORIES = ['Паспорт', 'ПРОПИСКА'];
+const BIRTH_CATEGORIES = ['Паспорт', 'СОР'];
+function updateCategoryVisibility() {
   const sel = document.getElementById('category-select');
   const name = sel.options[sel.selectedIndex].text.trim();
-  const show = (name === 'Паспорт' || name === 'ПРОПИСКА');
-  document.getElementById('registration-section').style.display = show ? '' : 'none';
+  document.getElementById('registration-section').style.display = REG_CATEGORIES.includes(name) ? '' : 'none';
+  document.getElementById('birth-section').style.display = BIRTH_CATEGORIES.includes(name) ? '' : 'none';
 }
-updateRegVisibility();
+updateCategoryVisibility();
 </script>
 
 {% endblock %}

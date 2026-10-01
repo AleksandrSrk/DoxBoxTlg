@@ -37,6 +37,10 @@ def init_db():
             conn.exec_driver_sql("ALTER TABLE documents ADD COLUMN registration_address VARCHAR(500)")
         if "registration_date" not in doc_cols:
             conn.exec_driver_sql("ALTER TABLE documents ADD COLUMN registration_date DATE")
+        if "birth_date" not in doc_cols:
+            conn.exec_driver_sql("ALTER TABLE documents ADD COLUMN birth_date DATE")
+        if "birth_place" not in doc_cols:
+            conn.exec_driver_sql("ALTER TABLE documents ADD COLUMN birth_place VARCHAR(500)")
         conn.commit()
 
         conn.exec_driver_sql("""

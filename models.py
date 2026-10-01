@@ -62,6 +62,9 @@ class Document(Base):
     # только для категорий "Паспорт" и "ПРОПИСКА" — адрес и дата регистрации
     registration_address: Mapped[str | None] = mapped_column(String(500), nullable=True)
     registration_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # только для категорий "Паспорт" и "СОР" — дата и место рождения
+    birth_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    birth_place: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # дата самого документа — по ней сортировка "самый свежий"
     issue_date: Mapped[date | None] = mapped_column(Date, nullable=True)

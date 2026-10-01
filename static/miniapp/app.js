@@ -104,6 +104,8 @@ function renderDocCard(d) {
       ${d.extra_number ? `<div class="doc-detail-row"><span>Доп. номер</span><span class="copyable">${escapeHtml(d.extra_number)}</span></div>` : ""}
       ${d.registration_address ? `<div class="doc-detail-row"><span>Адрес рег.</span><span class="copyable">${escapeHtml(d.registration_address)}</span></div>` : ""}
       ${d.registration_date ? `<div class="doc-detail-row"><span>Дата рег.</span><span class="copyable">${formatDate(d.registration_date)}</span></div>` : ""}
+      ${d.birth_date ? `<div class="doc-detail-row"><span>Дата рождения</span><span class="copyable">${formatDate(d.birth_date)}</span></div>` : ""}
+      ${d.birth_place ? `<div class="doc-detail-row"><span>Место рождения</span><span class="copyable">${escapeHtml(d.birth_place)}</span></div>` : ""}
       <div class="doc-detail-row"><span>Действует</span><span class="copyable">${validityText(d)}</span></div>
       <div class="doc-detail-row"><span>Субъект</span><span class="copyable">${escapeHtml(d.subject_name)}</span></div>
     </div>
