@@ -33,6 +33,10 @@ def init_db():
         doc_cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(documents)")}
         if "extra_number" not in doc_cols:
             conn.exec_driver_sql("ALTER TABLE documents ADD COLUMN extra_number VARCHAR(300)")
+        if "registration_address" not in doc_cols:
+            conn.exec_driver_sql("ALTER TABLE documents ADD COLUMN registration_address VARCHAR(500)")
+        if "registration_date" not in doc_cols:
+            conn.exec_driver_sql("ALTER TABLE documents ADD COLUMN registration_date DATE")
         conn.commit()
 
         conn.exec_driver_sql("""

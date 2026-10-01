@@ -38,6 +38,11 @@
   {{ row("Действует с", "valid_from", doc.valid_from, is_date=True) }}
   {{ row("Действует до", "valid_until", doc.valid_until, is_date=True) }}
 
+  {% if doc.category.name in ["Паспорт", "ПРОПИСКА"] %}
+  {{ row("Адрес регистрации", "registration_address", doc.registration_address) }}
+  {{ row("Дата регистрации", "registration_date", doc.registration_date, is_date=True) }}
+  {% endif %}
+
   {% if doc.notify_before_expiry %}
   <div class="detail-row">
     <span class="detail-label">Напоминание</span>

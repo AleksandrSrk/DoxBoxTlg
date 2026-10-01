@@ -323,7 +323,7 @@ def edit_document_form(doc_id: int, request: Request, db: Session = Depends(get_
 def _parsed_fields(
     subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
     issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
-    is_primary, drive_link,
+    is_primary, drive_link, registration_address, registration_date,
 ):
     """Общий разбор полей формы для создания и правки документа."""
     return dict(
@@ -335,6 +335,8 @@ def _parsed_fields(
         number=number.strip() or None,
         issued_by=issued_by.strip() or None,
         extra_number=extra_number.strip() or None,
+        registration_address=registration_address.strip() or None,
+        registration_date=date.fromisoformat(registration_date) if registration_date else None,
         issue_date=date.fromisoformat(issue_date) if issue_date else None,
         valid_from=date.fromisoformat(valid_from) if valid_from else None,
         valid_until=date.fromisoformat(valid_until) if valid_until else None,
@@ -356,6 +358,8 @@ def create_document(
     number: str = Form(""),
     issued_by: str = Form(""),
     extra_number: str = Form(""),
+    registration_address: str = Form(""),
+    registration_date: str = Form(""),
     issue_date: str = Form(""),
     valid_from: str = Form(""),
     valid_until: str = Form(""),
@@ -368,7 +372,7 @@ def create_document(
     fields = _parsed_fields(
         subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
         issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
-        is_primary, drive_link,
+        is_primary, drive_link, registration_address, registration_date,
     )
     db.add(Document(**fields))
     db.commit()
@@ -386,6 +390,8 @@ def update_document(
     number: str = Form(""),
     issued_by: str = Form(""),
     extra_number: str = Form(""),
+    registration_address: str = Form(""),
+    registration_date: str = Form(""),
     issue_date: str = Form(""),
     valid_from: str = Form(""),
     valid_until: str = Form(""),
@@ -401,7 +407,7 @@ def update_document(
     fields = _parsed_fields(
         subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
         issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
-        is_primary, drive_link,
+        is_primary, drive_link, registration_address, registration_date,
     )
     for key, value in fields.items():
         setattr(doc, key, value)
@@ -456,8 +462,9 @@ def download_file(
 EDITABLE_DOC_FIELDS = {
     "series", "number", "issued_by", "extra_number",
     "issue_date", "valid_from", "valid_until",
+    "registration_address", "registration_date",
 }
-_DATE_FIELDS = {"issue_date", "valid_from", "valid_until"}
+_DATE_FIELDS = {"issue_date", "valid_from", "valid_until", "registration_date"}
 
 
 @app.get("/admin/documents/{doc_id}")

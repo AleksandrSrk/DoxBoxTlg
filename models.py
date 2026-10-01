@@ -59,6 +59,9 @@ class Document(Base):
     # универсальное поле под то, что не влезает в серию/номер: код
     # подразделения у паспорта, номер записи акта у свидетельства и т.п.
     extra_number: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    # только для категорий "Паспорт" и "ПРОПИСКА" — адрес и дата регистрации
+    registration_address: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    registration_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # дата самого документа — по ней сортировка "самый свежий"
     issue_date: Mapped[date | None] = mapped_column(Date, nullable=True)

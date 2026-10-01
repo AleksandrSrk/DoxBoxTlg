@@ -33,6 +33,8 @@ def doc_to_dict(d: Document) -> dict:
         "category": d.category.name, "category_id": d.category_id,
         "series": d.series, "number": d.number, "issued_by": d.issued_by,
         "extra_number": d.extra_number,
+        "registration_address": d.registration_address,
+        "registration_date": d.registration_date.isoformat() if d.registration_date else None,
         "issue_date": d.issue_date.isoformat() if d.issue_date else None,
         "valid_from": d.valid_from.isoformat() if d.valid_from else None,
         "valid_until": d.valid_until.isoformat() if d.valid_until else None,

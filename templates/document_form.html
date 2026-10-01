@@ -22,7 +22,7 @@
     </label>
 
     <label>Категория
-      <select name="category_id" required>
+      <select name="category_id" id="category-select" onchange="updateRegVisibility()" required>
         {% for c in categories %}
         <option value="{{ c.id }}" {% if doc and doc.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>
         {% endfor %}
@@ -56,6 +56,18 @@
     <label>Кем выдан <input type="text" name="issued_by" value="{{ doc.issued_by if doc else '' }}"></label>
     <label class="span-2">Доп. номер <span class="muted">(код подразделения, номер записи акта и т.п.)</span>
       <input type="text" name="extra_number" value="{{ doc.extra_number if doc else '' }}">
+    </label>
+  </div>
+</div>
+
+<div class="form-section" id="registration-section">
+  <h3>Регистрация <span class="muted">(только для паспорта и прописки)</span></h3>
+  <div class="form-grid">
+    <label class="span-2">Адрес регистрации
+      <input type="text" name="registration_address" value="{{ doc.registration_address if doc else '' }}">
+    </label>
+    <label>Дата регистрации
+      <input type="date" name="registration_date" value="{{ doc.registration_date if doc else '' }}">
     </label>
   </div>
 </div>
@@ -98,4 +110,15 @@
 
 <button type="submit" class="btn">Сохранить</button>
 </form>
+
+<script>
+function updateRegVisibility() {
+  const sel = document.getElementById('category-select');
+  const name = sel.options[sel.selectedIndex].text.trim();
+  const show = (name === 'Паспорт' || name === 'ПРОПИСКА');
+  document.getElementById('registration-section').style.display = show ? '' : 'none';
+}
+updateRegVisibility();
+</script>
+
 {% endblock %}
