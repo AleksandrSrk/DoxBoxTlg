@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from datetime import date
+import mimetypes
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -16,15 +17,47 @@ from drive import download_file_bytes, get_file_metadata
 from models import Subject, Folder, Category, Document
 from api import router as api_router
 
+_TRANSLIT = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
+    "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+    "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch",
+    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+}
+
+
+def transliterate(text: str) -> str:
+    """Кириллица → латиница, для запасного ASCII-имени файла."""
+    out = []
+    for ch in text:
+        low = ch.lower()
+        t = _TRANSLIT.get(low)
+        if t is None:
+            out.append(ch)
+        else:
+            out.append(t.capitalize() if ch.isupper() and t else t)
+    return "".join(out)
+
+
+def build_download_filename(doc: Document, original_name: str, mimetype: str) -> str:
+    """Имя документа + субъекта вместо того, что как попало называлось
+    в Drive (обычно это мусорное имя от сканера)."""
+    base = f"{doc.title} {doc.subject.name}".strip()
+    ext = original_name.rsplit(".", 1)[-1] if "." in original_name else ""
+    if not ext and mimetype:
+        guessed = mimetypes.guess_extension(mimetype)
+        ext = guessed.lstrip(".") if guessed else ""
+    return f"{base}.{ext}" if ext else base
+
 
 def content_disposition(filename: str) -> str:
     """HTTP-заголовки не умеют напрямую нести не-latin1 символы (кириллицу) —
-    кодируем по RFC 5987, plus ASCII-запасной вариант для старых клиентов.
-    Если имя почти целиком кириллица (как у нас обычно и бывает), после
-    вычистки небезопасных символов от него может не остаться ничего
-    содержательного — тогда подставляем generic-имя с тем же расширением."""
+    кодируем по RFC 5987 (так получит реальное русское имя любой клиент,
+    который это умеет), plus запасной вариант для тех, кто не умеет —
+    транслитерация в латиницу, а не просто "document.pdf"."""
     from urllib.parse import quote
-    ascii_name = filename.encode("ascii", errors="ignore").decode("ascii").strip()
+    ascii_name = transliterate(filename)
+    ascii_name = ascii_name.encode("ascii", errors="ignore").decode("ascii").strip()
     base = ascii_name.rsplit(".", 1)[0] if "." in ascii_name else ascii_name
     if not any(c.isalnum() for c in base):
         ext = filename.rsplit(".", 1)[-1] if "." in filename else ""
@@ -392,7 +425,7 @@ def download_file(
 
     meta = get_file_metadata(doc.drive_file_id)
     file_bytes = download_file_bytes(doc.drive_file_id)
-    filename = meta.get("name", doc.title)
+    filename = build_download_filename(doc, meta.get("name", ""), meta.get("mimeType", ""))
 
     headers = {
         "Content-Disposition": content_disposition(filename),
@@ -451,7 +484,7 @@ def admin_download_document(doc_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Файл не найден или ссылка на Drive не задана")
     meta = get_file_metadata(doc.drive_file_id)
     file_bytes = download_file_bytes(doc.drive_file_id)
-    filename = meta.get("name", doc.title)
+    filename = build_download_filename(doc, meta.get("name", ""), meta.get("mimeType", ""))
     headers = {"Content-Disposition": content_disposition(filename)}
     if meta.get("size"):
         headers["Content-Length"] = str(meta["size"])
