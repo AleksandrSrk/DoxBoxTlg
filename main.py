@@ -1,9 +1,13 @@
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import date, datetime
 import mimetypes
+import os
+import sqlite3
+import tempfile
 from typing import Optional
 from urllib.parse import urlencode
 
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
 from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,9 +17,34 @@ from sqlalchemy import select, func
 
 from database import SessionLocal, init_db, parse_drive_file_id
 from download_tokens import verify_download_token
-from drive import get_file_metadata, stream_file_chunks
+from drive import get_file_metadata, stream_file_chunks, update_file_content
 from models import Subject, Folder, Category, Document
 from api import router as api_router
+
+BACKUP_FILE_ID = os.getenv("BACKUP_FILE_ID", "")
+
+
+def backup_database():
+    """Снимок doxbot.db через VACUUM INTO (целостный даже при параллельной
+    записи) — и поверх уже существующего файла в Drive (создавать новые
+    сервисный аккаунт не может — нет своей квоты). Раз в неделю плюс один
+    раз при каждом старте приложения, чтобы не ждать неделю после деплоя."""
+    if not BACKUP_FILE_ID:
+        print("Backup skipped: BACKUP_FILE_ID не задан")
+        return
+    tmp_path = os.path.join(tempfile.gettempdir(), "doxbot_backup_tmp.db")
+    try:
+        src = sqlite3.connect("doxbot.db")
+        src.execute(f"VACUUM INTO '{tmp_path}'")
+        src.close()
+        update_file_content(BACKUP_FILE_ID, tmp_path, "application/x-sqlite3")
+        print(f"Backup OK: {datetime.now().isoformat()}")
+    except Exception as e:
+        print(f"Backup FAILED: {e}")
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
 
 _TRANSLIT = {
     "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
@@ -79,7 +108,14 @@ async def lifespan(app: FastAPI):
         db.commit()
     finally:
         db.close()
+
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(backup_database, "cron", day_of_week="sun", hour=3, minute=0)
+    scheduler.add_job(backup_database, "date")  # разовый прогон сразу при старте
+    scheduler.start()
+
     yield
+    scheduler.shutdown()
 
 
 app = FastAPI(title="doxBot admin", lifespan=lifespan)

@@ -6,9 +6,11 @@ import os
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
-SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+# readonly было достаточно, пока только скачивали — теперь ещё и бэкап
+# льётся в Drive, нужны права на запись в расшаренную папку.
+SCOPES = ["https://www.googleapis.com/auth/drive"]
 SERVICE_ACCOUNT_FILE = os.getenv("GOOGLE_SERVICE_ACCOUNT_FILE", "./service_account.json")
 
 _service = None
@@ -59,3 +61,15 @@ def stream_file_chunks(file_id: str):
         sent = buf.tell()
         if chunk:
             yield chunk
+
+
+def update_file_content(file_id: str, local_path: str,
+                         mimetype: str = "application/octet-stream") -> dict:
+    """Перезаписывает содержимое уже существующего файла — сервисный
+    аккаунт не может создавать новые файлы (нет своей квоты на обычном
+    личном Диске), а вот обновлять расшаренные ему файлы может свободно.
+    Старые версии остаются в истории версий самого файла в Drive."""
+    media = MediaFileUpload(local_path, mimetype=mimetype)
+    return _get_service().files().update(
+        fileId=file_id, media_body=media, fields="id,name,modifiedTime"
+    ).execute()
