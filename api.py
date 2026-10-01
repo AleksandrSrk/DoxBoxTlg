@@ -5,7 +5,7 @@ import os
 from typing import Optional
 
 import requests
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy import select, func, or_
 from sqlalchemy.orm import Session
 
@@ -120,15 +120,34 @@ def search_documents(
     return [doc_to_dict(d) for d in db.scalars(query).all()]
 
 
+def _send_document_background(chat_id: int, file_url: str):
+    """Выполняется уже после того, как фронт получил ответ — поэтому
+    тут можно позволить себе щедрый таймаут, не задерживая попап скачивания
+    в мини-аппе: Telegram сам идёт и скачивает файл по этой ссылке, и это
+    не всегда укладывается в секунды."""
+    try:
+        tg_resp = requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
+            data={"chat_id": chat_id, "document": file_url},
+            timeout=60,
+        )
+        if not tg_resp.ok:
+            print(f"sendDocument failed: {tg_resp.status_code} {tg_resp.text}")
+    except requests.RequestException as e:
+        print(f"sendDocument request error: {e}")
+
+
 @router.post("/documents/{doc_id}/download-link")
 def get_download_link(
     doc_id: int,
     request: Request,
+    background_tasks: BackgroundTasks,
     user: dict = Depends(require_telegram_user),
     db: Session = Depends(get_db),
 ):
     """Готовит подписанную ссылку на файл (для Telegram.WebApp.downloadFile)
-    и параллельно шлёт тот же файл ботом в чат — дублирующая копия."""
+    и ставит отправку той же копии в чат отдельной фоновой задачей —
+    чтобы не держать фронт в ожидании, пока Telegram сам скачает файл."""
     doc = db.get(Document, doc_id)
     if not doc or not doc.drive_file_id:
         raise HTTPException(404, "Файл не найден или ссылка на Drive не задана")
@@ -139,16 +158,6 @@ def get_download_link(
 
     chat_id = user.get("id")
     if chat_id and BOT_TOKEN:
-        try:
-            tg_resp = requests.post(
-                f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
-                data={"chat_id": chat_id, "document": file_url},
-                timeout=15,
-            )
-            if not tg_resp.ok:
-                print(f"sendDocument failed: {tg_resp.status_code} {tg_resp.text}")
-        except requests.RequestException as e:
-            print(f"sendDocument request error: {e}")
-            # popup для скачивания в мини-аппе важнее, не роняем запрос из-за копии в чат
+        background_tasks.add_task(_send_document_background, chat_id, file_url)
 
     return {"url": file_url, "file_name": doc.title}
