@@ -387,13 +387,17 @@ def download_file(
     file_bytes = download_file_bytes(doc.drive_file_id)
     filename = meta.get("name", doc.title)
 
+    headers = {
+        "Content-Disposition": content_disposition(filename),
+        "Access-Control-Allow-Origin": "https://web.telegram.org",
+    }
+    if meta.get("size"):
+        headers["Content-Length"] = str(meta["size"])
+
     return StreamingResponse(
         file_bytes,
         media_type=meta.get("mimeType", "application/octet-stream"),
-        headers={
-            "Content-Disposition": content_disposition(filename),
-            "Access-Control-Allow-Origin": "https://web.telegram.org",
-        },
+        headers=headers,
     )
 
 
@@ -441,10 +445,13 @@ def admin_download_document(doc_id: int, db: Session = Depends(get_db)):
     meta = get_file_metadata(doc.drive_file_id)
     file_bytes = download_file_bytes(doc.drive_file_id)
     filename = meta.get("name", doc.title)
+    headers = {"Content-Disposition": content_disposition(filename)}
+    if meta.get("size"):
+        headers["Content-Length"] = str(meta["size"])
     return StreamingResponse(
         file_bytes,
         media_type=meta.get("mimeType", "application/octet-stream"),
-        headers={"Content-Disposition": content_disposition(filename)},
+        headers=headers,
     )
 
 

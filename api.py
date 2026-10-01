@@ -140,12 +140,15 @@ def get_download_link(
     chat_id = user.get("id")
     if chat_id and BOT_TOKEN:
         try:
-            requests.post(
+            tg_resp = requests.post(
                 f"https://api.telegram.org/bot{BOT_TOKEN}/sendDocument",
                 data={"chat_id": chat_id, "document": file_url},
                 timeout=15,
             )
-        except requests.RequestException:
-            pass  # popup для скачивания в мини-аппе важнее, не роняем запрос из-за копии в чат
+            if not tg_resp.ok:
+                print(f"sendDocument failed: {tg_resp.status_code} {tg_resp.text}")
+        except requests.RequestException as e:
+            print(f"sendDocument request error: {e}")
+            # popup для скачивания в мини-аппе важнее, не роняем запрос из-за копии в чат
 
     return {"url": file_url, "file_name": doc.title}

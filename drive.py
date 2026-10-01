@@ -25,8 +25,10 @@ def _get_service():
 
 
 def get_file_metadata(file_id: str) -> dict:
-    """Имя файла и mime-type — нужны для правильного имени при скачивании."""
-    return _get_service().files().get(fileId=file_id, fields="name,mimeType").execute()
+    """Имя, mime-type и размер файла — размер нужен для Content-Length,
+    без него некоторые клиенты (включая Telegram при скачивании по URL)
+    ведут себя непредсказуемо с потоковым ответом без длины."""
+    return _get_service().files().get(fileId=file_id, fields="name,mimeType,size").execute()
 
 
 def download_file_bytes(file_id: str) -> io.BytesIO:
