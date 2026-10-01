@@ -87,32 +87,36 @@ function renderDocCard(d) {
   const expiring = isExpiringSoon(d.valid_until);
   return `
   <div class="doc-card">
-    <div class="doc-tags">
-      <span class="tag subject">${escapeHtml(d.subject_name)}</span>
-      <span class="tag">${escapeHtml(d.category)}</span>
-      ${d.is_primary ? `<span class="tag primary">★ Основной</span>` : ""}
-      ${expiring ? `<span class="tag warn">${expiring}</span>` : ""}
+    <div class="doc-summary" data-toggle-doc="body-${d.id}">
+      <div class="doc-tags">
+        <span class="tag subject">${escapeHtml(d.subject_name)}</span>
+        <span class="tag">${escapeHtml(d.category)}</span>
+        ${d.is_primary ? `<span class="tag primary">★ Основной</span>` : ""}
+        ${expiring ? `<span class="tag warn">${expiring}</span>` : ""}
+      </div>
+      <div class="doc-title">${escapeHtml(d.title)}</div>
     </div>
-    <div class="doc-title">${escapeHtml(d.title)}</div>
-    <div class="doc-fields">
-      ${field("Серия", d.series)}
-      ${field("Номер", d.number)}
-      ${field("Дата выдачи", formatDate(d.issue_date))}
-    </div>
-    <div class="doc-details" id="details-${d.id}">
-      <div class="doc-detail-row"><span>Кем выдан</span><span class="copyable">${escapeHtml(d.issued_by || "—")}</span></div>
-      ${d.extra_number ? `<div class="doc-detail-row"><span>Доп. номер</span><span class="copyable">${escapeHtml(d.extra_number)}</span></div>` : ""}
-      ${d.registration_address ? `<div class="doc-detail-row"><span>Адрес рег.</span><span class="copyable">${escapeHtml(d.registration_address)}</span></div>` : ""}
-      ${d.registration_date ? `<div class="doc-detail-row"><span>Дата рег.</span><span class="copyable">${formatDate(d.registration_date)}</span></div>` : ""}
-      ${d.birth_date ? `<div class="doc-detail-row"><span>Дата рождения</span><span class="copyable">${formatDate(d.birth_date)}</span></div>` : ""}
-      ${d.birth_place ? `<div class="doc-detail-row"><span>Место рождения</span><span class="copyable">${escapeHtml(d.birth_place)}</span></div>` : ""}
-      <div class="doc-detail-row"><span>Действует</span><span class="copyable">${validityText(d)}</span></div>
-      <div class="doc-detail-row"><span>Субъект</span><span class="copyable">${escapeHtml(d.subject_name)}</span></div>
-    </div>
-    <button class="toggle-btn" data-toggle="${d.id}">Раскрыть подробнее ⌄</button>
-    <div class="doc-actions">
-      <button data-download="${d.id}">⬇ Скачать</button>
-      <button data-copy="${d.id}">⧉ Скопировать</button>
+    <div class="doc-body" id="body-${d.id}">
+      <div class="doc-fields">
+        ${field("Серия", d.series)}
+        ${field("Номер", d.number)}
+        ${field("Дата выдачи", formatDate(d.issue_date))}
+      </div>
+      <div class="doc-details" id="details-${d.id}">
+        <div class="doc-detail-row"><span>Кем выдан</span><span class="copyable">${escapeHtml(d.issued_by || "—")}</span></div>
+        ${d.extra_number ? `<div class="doc-detail-row"><span>Доп. номер</span><span class="copyable">${escapeHtml(d.extra_number)}</span></div>` : ""}
+        ${d.registration_address ? `<div class="doc-detail-row"><span>Адрес рег.</span><span class="copyable">${escapeHtml(d.registration_address)}</span></div>` : ""}
+        ${d.registration_date ? `<div class="doc-detail-row"><span>Дата рег.</span><span class="copyable">${formatDate(d.registration_date)}</span></div>` : ""}
+        ${d.birth_date ? `<div class="doc-detail-row"><span>Дата рождения</span><span class="copyable">${formatDate(d.birth_date)}</span></div>` : ""}
+        ${d.birth_place ? `<div class="doc-detail-row"><span>Место рождения</span><span class="copyable">${escapeHtml(d.birth_place)}</span></div>` : ""}
+        <div class="doc-detail-row"><span>Действует</span><span class="copyable">${validityText(d)}</span></div>
+        <div class="doc-detail-row"><span>Субъект</span><span class="copyable">${escapeHtml(d.subject_name)}</span></div>
+      </div>
+      <button class="toggle-btn" data-toggle="${d.id}">Раскрыть подробнее ⌄</button>
+      <div class="doc-actions">
+        <button data-download="${d.id}">⬇ Скачать</button>
+        <button data-copy="${d.id}">⧉ Скопировать</button>
+      </div>
     </div>
   </div>`;
 }
@@ -124,6 +128,11 @@ function attachDocCardEvents(container) {
       const details = document.getElementById(`details-${id}`);
       const open = details.classList.toggle("open");
       btn.textContent = open ? "Свернуть ︿" : "Раскрыть подробнее ⌄";
+    });
+  });
+  container.querySelectorAll("[data-toggle-doc]").forEach(el => {
+    el.addEventListener("click", () => {
+      document.getElementById(el.dataset.toggleDoc).classList.toggle("open");
     });
   });
   container.querySelectorAll("[data-copy]").forEach(btn => {
