@@ -13,7 +13,7 @@ from sqlalchemy import select, func
 
 from database import SessionLocal, init_db, parse_drive_file_id
 from download_tokens import verify_download_token
-from drive import download_file_bytes, get_file_metadata
+from drive import get_file_metadata, stream_file_chunks
 from models import Subject, Folder, Category, Document
 from api import router as api_router
 
@@ -435,7 +435,6 @@ def download_file(
         raise HTTPException(404, "Файл не найден")
 
     meta = get_file_metadata(doc.drive_file_id)
-    file_bytes = download_file_bytes(doc.drive_file_id)
     filename = build_download_filename(doc, meta.get("name", ""), meta.get("mimeType", ""))
 
     headers = {
@@ -446,7 +445,7 @@ def download_file(
         headers["Content-Length"] = str(meta["size"])
 
     return StreamingResponse(
-        file_bytes,
+        stream_file_chunks(doc.drive_file_id),
         media_type=meta.get("mimeType", "application/octet-stream"),
         headers=headers,
     )
@@ -494,13 +493,12 @@ def admin_download_document(doc_id: int, db: Session = Depends(get_db)):
     if not doc or not doc.drive_file_id:
         raise HTTPException(404, "Файл не найден или ссылка на Drive не задана")
     meta = get_file_metadata(doc.drive_file_id)
-    file_bytes = download_file_bytes(doc.drive_file_id)
     filename = build_download_filename(doc, meta.get("name", ""), meta.get("mimeType", ""))
     headers = {"Content-Disposition": content_disposition(filename)}
     if meta.get("size"):
         headers["Content-Length"] = str(meta["size"])
     return StreamingResponse(
-        file_bytes,
+        stream_file_chunks(doc.drive_file_id),
         media_type=meta.get("mimeType", "application/octet-stream"),
         headers=headers,
     )

@@ -40,3 +40,22 @@ def download_file_bytes(file_id: str) -> io.BytesIO:
         _, done = downloader.next_chunk()
     buf.seek(0)
     return buf
+
+
+def stream_file_chunks(file_id: str):
+    """Отдаёт файл кусками по мере скачивания из Drive, не дожидаясь,
+    пока он весь соберётся в памяти — иначе TTFB может оказаться слишком
+    большим для чужих фетчеров (например, Telegram сам идёт забирать файл
+    по нашей ссылке и, похоже, не готов долго ждать первый байт)."""
+    request = _get_service().files().get_media(fileId=file_id)
+    buf = io.BytesIO()
+    downloader = MediaIoBaseDownload(buf, request, chunksize=1024 * 1024)
+    done = False
+    sent = 0
+    while not done:
+        _, done = downloader.next_chunk()
+        buf.seek(sent)
+        chunk = buf.read()
+        sent = buf.tell()
+        if chunk:
+            yield chunk
