@@ -16,5 +16,24 @@
 <main class="container">
 {% block content %}{% endblock %}
 </main>
+<script>
+// Поле type="date" само не умеет принимать вставленную дату вида
+// "21.03.2025" — браузер ждёт ввод по сегментам руками. Перехватываем
+// вставку на любом таком поле во всей админке и раскладываем по месту сами.
+document.addEventListener('paste', function (e) {
+  var el = e.target;
+  if (!(el.tagName === 'INPUT' && el.type === 'date')) return;
+  var text = (e.clipboardData || window.clipboardData).getData('text').trim();
+  var m = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) {
+    m = text.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/);
+    if (m) m = [null, m[3], m[2].padStart(2, '0'), m[1].padStart(2, '0')];
+  }
+  if (m) {
+    e.preventDefault();
+    el.value = m[1] + '-' + m[2] + '-' + m[3];
+  }
+});
+</script>
 </body>
 </html>
