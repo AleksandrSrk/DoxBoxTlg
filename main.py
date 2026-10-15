@@ -356,6 +356,13 @@ def edit_document_form(doc_id: int, request: Request, db: Session = Depends(get_
     })
 
 
+def _opt_text(value: str | None) -> str | None:
+    """Пустое поле -> NULL. Литерал 'None' тоже NULL: так шаблон раньше рендерил пустые поля,
+    и форма отправляла это слово обратно как значение."""
+    value = (value or "").strip()
+    return None if value in ("", "None") else value
+
+
 def _parsed_fields(
     subject_id, category_id, folder_id, title, series, number, issued_by, extra_number,
     issue_date, valid_from, valid_until, notify_before_expiry, notify_period,
@@ -368,14 +375,14 @@ def _parsed_fields(
         category_id=category_id,
         folder_id=int(folder_id) if folder_id else None,
         title=title.strip(),
-        series=series.strip() or None,
-        number=number.strip() or None,
-        issued_by=issued_by.strip() or None,
-        extra_number=extra_number.strip() or None,
-        registration_address=registration_address.strip() or None,
+        series=_opt_text(series),
+        number=_opt_text(number),
+        issued_by=_opt_text(issued_by),
+        extra_number=_opt_text(extra_number),
+        registration_address=_opt_text(registration_address),
         registration_date=date.fromisoformat(registration_date) if registration_date else None,
         birth_date=date.fromisoformat(birth_date) if birth_date else None,
-        birth_place=birth_place.strip() or None,
+        birth_place=_opt_text(birth_place),
         issue_date=date.fromisoformat(issue_date) if issue_date else None,
         valid_from=date.fromisoformat(valid_from) if valid_from else None,
         valid_until=date.fromisoformat(valid_until) if valid_until else None,
@@ -534,7 +541,7 @@ def update_document_field(
     if field in _DATE_FIELDS:
         setattr(doc, field, date.fromisoformat(value) if value else None)
     else:
-        setattr(doc, field, value.strip() or None)
+        setattr(doc, field, _opt_text(value))
     db.commit()
     return RedirectResponse(f"/admin/documents/{doc_id}", status_code=303)
 

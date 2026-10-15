@@ -42,7 +42,7 @@
     </label>
 
     <label class="span-2">Название
-      <input type="text" name="title" value="{{ doc.title if doc else '' }}" required>
+      <input type="text" name="title" value="{{ (doc.title if doc else '') or '' }}" required>
     </label>
   </div>
 </div>
@@ -50,12 +50,12 @@
 <div class="form-section">
   <h3>Реквизиты</h3>
   <div class="form-grid">
-    <label>Серия <input type="text" name="series" value="{{ doc.series if doc else '' }}"></label>
-    <label>Номер <input type="text" name="number" value="{{ doc.number if doc else '' }}"></label>
-    <label>Дата выдачи <input type="date" name="issue_date" value="{{ doc.issue_date if doc else '' }}"></label>
-    <label>Кем выдан <input type="text" name="issued_by" value="{{ doc.issued_by if doc else '' }}"></label>
+    <label>Серия <input type="text" name="series" value="{{ (doc.series if doc else '') or '' }}"></label>
+    <label>Номер <input type="text" name="number" value="{{ (doc.number if doc else '') or '' }}"></label>
+    <label>Дата выдачи <input type="date" name="issue_date" value="{{ (doc.issue_date if doc else '') or '' }}"></label>
+    <label>Кем выдан <input type="text" name="issued_by" value="{{ (doc.issued_by if doc else '') or '' }}"></label>
     <label class="span-2">Доп. номер <span class="muted">(код подразделения, номер записи акта и т.п.)</span>
-      <input type="text" name="extra_number" value="{{ doc.extra_number if doc else '' }}">
+      <input type="text" name="extra_number" value="{{ (doc.extra_number if doc else '') or '' }}">
     </label>
   </div>
 </div>
@@ -64,10 +64,10 @@
   <h3>Регистрация <span class="muted">(только для паспорта и прописки)</span></h3>
   <div class="form-grid">
     <label class="span-2">Адрес регистрации
-      <input type="text" name="registration_address" value="{{ doc.registration_address if doc else '' }}">
+      <input type="text" name="registration_address" value="{{ (doc.registration_address if doc else '') or '' }}">
     </label>
     <label>Дата регистрации
-      <input type="date" name="registration_date" value="{{ doc.registration_date if doc else '' }}">
+      <input type="date" name="registration_date" value="{{ (doc.registration_date if doc else '') or '' }}">
     </label>
   </div>
 </div>
@@ -76,10 +76,10 @@
   <h3>Рождение <span class="muted">(только для паспорта и СОР)</span></h3>
   <div class="form-grid">
     <label>Дата рождения
-      <input type="date" name="birth_date" value="{{ doc.birth_date if doc else '' }}">
+      <input type="date" name="birth_date" value="{{ (doc.birth_date if doc else '') or '' }}">
     </label>
     <label>Место рождения
-      <input type="text" name="birth_place" value="{{ doc.birth_place if doc else '' }}">
+      <input type="text" name="birth_place" value="{{ (doc.birth_place if doc else '') or '' }}">
     </label>
   </div>
 </div>
@@ -87,8 +87,8 @@
 <div class="form-section">
   <h3>Срок действия и напоминания</h3>
   <div class="form-grid">
-    <label>Действует с <input type="date" name="valid_from" value="{{ doc.valid_from if doc else '' }}"></label>
-    <label>Действует до <input type="date" name="valid_until" value="{{ doc.valid_until if doc else '' }}"></label>
+    <label>Действует с <input type="date" name="valid_from" value="{{ (doc.valid_from if doc else '') or '' }}"></label>
+    <label>Действует до <input type="date" name="valid_until" value="{{ (doc.valid_until if doc else '') or '' }}"></label>
 
     <label class="checkbox span-2">
       <input type="checkbox" name="notify_before_expiry" {% if doc and doc.notify_before_expiry %}checked{% endif %}>
@@ -115,7 +115,7 @@
     </label>
 
     <label class="span-2">Ссылка на файл в Google Drive
-      <input type="url" name="drive_link" value="{{ doc.drive_link if doc else '' }}" required>
+      <input type="url" name="drive_link" value="{{ (doc.drive_link if doc else '') or '' }}" required>
     </label>
   </div>
 </div>
