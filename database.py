@@ -69,4 +69,8 @@ def init_db():
                 VALUES (new.id, new.title, new.series, new.number, new.issued_by);
             END
         """)
+        # Пересобираем индекс при старте: документы, добавленные до появления
+        # FTS-таблицы или в обход триггеров, иначе в поиск не попадут.
+        # На семейных объёмах это миллисекунды.
+        conn.exec_driver_sql("INSERT INTO documents_fts(documents_fts) VALUES ('rebuild')")
         conn.commit()

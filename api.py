@@ -2,11 +2,12 @@
 проверкой initData + whitelist (см. telegram_auth.py)."""
 
 import os
+import re
 from typing import Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, text
 from sqlalchemy.orm import Session
 
 from database import SessionLocal
@@ -25,6 +26,15 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def _fts_query(q: str) -> str:
+    """Строка пользователя -> безопасный запрос FTS5.
+    Каждое слово в кавычках (спецсимволы FTS5 вроде - * : не ломают запрос)
+    и со звёздочкой — поиск по началу слова: «пасп» найдёт «Паспорт».
+    Слова объединяются через AND: «паспорт иван» = оба слова."""
+    words = re.findall(r"\w+", q)
+    return " ".join(f'"{w}"*' for w in words)
 
 
 def doc_to_dict(d: Document) -> dict:
@@ -113,13 +123,19 @@ def search_documents(
     if primary_only:
         query = query.where(Document.is_primary.is_(True))
     if q:
-        like = f"%{q}%"
-        query = query.where(
-            or_(
-                Document.title.ilike(like), Document.series.ilike(like),
-                Document.number.ilike(like), Document.issued_by.ilike(like),
+        fts = _fts_query(q)
+        if not fts:
+            return []
+        # Ищем через FTS5, а не ilike: в SQLite LIKE без учёта регистра
+        # работает только для латиницы, «паспорт» не находил «Паспорт».
+        # Токенайзер unicode61 приводит регистр для любого алфавита.
+        ids = [
+            row[0] for row in db.execute(
+                text("SELECT rowid FROM documents_fts WHERE documents_fts MATCH :q"),
+                {"q": fts},
             )
-        )
+        ]
+        query = query.where(Document.id.in_(ids))
     query = query.order_by(Document.issue_date.desc())
     return [doc_to_dict(d) for d in db.scalars(query).all()]
 

@@ -18,7 +18,7 @@
   <div class="avatar avatar-{{ s.id % 4 }}">{{ initials(s.name)|upper }}</div>
   <div>
     <div class="subject-card-name">{{ s.name }}</div>
-    <div class="subject-card-count">{{ doc_counts.get(s.id, 0) }} документ{{ "ов" if doc_counts.get(s.id, 0) != 1 else "" }}</div>
+    <div class="subject-card-count">{% set n = doc_counts.get(s.id, 0) %}{{ n }} {{ n|plural("документ", "документа", "документов") }}</div>
   </div>
 </a>
 {% endfor %}

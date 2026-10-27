@@ -121,6 +121,20 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="doxBot admin", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+
+def ru_plural(n: int, one: str, few: str, many: str) -> str:
+    """Русское склонение по числу: 1 документ, 2 документа, 5 документов.
+    11–14 — всегда «много» (11 документов, а не 11 документ)."""
+    n = abs(int(n))
+    if n % 10 == 1 and n % 100 != 11:
+        return one
+    if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:
+        return few
+    return many
+
+
+templates.env.filters["plural"] = ru_plural
 app.include_router(api_router)
 
 

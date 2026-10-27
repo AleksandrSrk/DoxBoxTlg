@@ -32,10 +32,10 @@ async def start(message: Message):
         InlineKeyboardButton(text="📄 Открыть документы", web_app=WebAppInfo(url=WEBAPP_URL))
     ]])
     await message.answer(
-        f"Привет!\n\nТвой Telegram ID: <code>{message.from_user.id}</code>\n"
-        "Пока доступ открыт всем, кто найдёт бота — добавь этот ID в "
-        "ALLOWED_TELEGRAM_IDS в .env и поставь DEV_MODE=false, чтобы закрыть "
-        "доступ для посторонних.",
+        # Не рассказываем посторонним, как устроена защита: только ID,
+        # который владелец добавит в белый список, если это свой человек.
+        f"Привет!\n\nВаш Telegram ID: <code>{message.from_user.id}</code>\n"
+        "Доступ к документам выдаёт администратор.",
         parse_mode="HTML",
         reply_markup=keyboard,
     )
